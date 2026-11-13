@@ -22,6 +22,7 @@ import {
   MAX_LINE_ALT,
 } from '../utils/raceLine';
 import { RaceLineHandles, PointDragManager, PointDragState, makePointDrag } from './RaceLineEditor';
+import { FieldColors, fieldColors } from '../theme/engine';
 
 // ---------------------------------------------------------------------------
 // Coordinate mapping
@@ -36,6 +37,8 @@ const TUBE = 0.09; // gate frame tube thickness (m)
 
 interface Field3DProps {
   groundName: string;
+  /** Active colour theme id; changing it re-renders the scene in the new colours */
+  themeId?: string;
   items: PlacedItem[];
   drawnPath: TrackPoint[];
   closeLoop: boolean;
@@ -106,7 +109,7 @@ function useWatermarkTexture(name: string) {
   }, [name]);
 }
 
-function FieldGround({ groundName }: { groundName: string }) {
+function FieldGround({ groundName, fc }: { groundName: string; fc: FieldColors }) {
   const watermark = useWatermarkTexture(groundName);
   const gridGeom = useMemo(() => {
     const pts: number[] = [];
@@ -138,21 +141,21 @@ function FieldGround({ groundName }: { groundName: string }) {
       {/* Surrounding ground */}
       <mesh rotation-x={-Math.PI / 2} position-y={-0.02}>
         <planeGeometry args={[FIELD_WIDTH_M + 60, FIELD_HEIGHT_M + 60]} />
-        <meshStandardMaterial color="#05080e" />
+        <meshStandardMaterial color={fc.under} />
       </mesh>
       {/* Field turf */}
       <mesh rotation-x={-Math.PI / 2}>
         <planeGeometry args={[FIELD_WIDTH_M, FIELD_HEIGHT_M]} />
-        <meshStandardMaterial color="#0f1c1a" roughness={1} />
+        <meshStandardMaterial color={fc.ground} roughness={1} />
       </mesh>
       <mesh rotation-x={-Math.PI / 2} position-y={0.005}>
         <planeGeometry args={[FIELD_WIDTH_M, FIELD_HEIGHT_M]} />
         <meshBasicMaterial map={watermark} transparent depthWrite={false} />
       </mesh>
       <lineSegments geometry={gridGeom}>
-        <lineBasicMaterial color="#1f3b3a" transparent opacity={0.8} />
+        <lineBasicMaterial color={fc.grid3d} transparent opacity={0.8} />
       </lineSegments>
-      <Line points={border} color="#334155" lineWidth={1.5} />
+      <Line points={border} color={fc.border} lineWidth={1.5} />
       <Line points={fence} color="#f59e0b" lineWidth={2} dashed dashSize={0.8} gapSize={0.5} />
     </group>
   );
@@ -572,6 +575,7 @@ function CameraGrabber({ target }: { target: React.MutableRefObject<{ camera: TH
 // ---------------------------------------------------------------------------
 export default function Field3D({
   groundName,
+  themeId,
   items,
   drawnPath,
   closeLoop,
@@ -837,7 +841,10 @@ export default function Field3D({
 
   const shadowPoints = useMemo(() => flightPoints.map((p) => new THREE.Vector3(p.x, 0.04, p.z)), [flightPoints]);
   const hasPath = flightPoints.length >= 2;
-  const pathColor = usingDrawn ? drawnPathColor : '#22d3ee';
+  // Re-read on every render so a theme switch (themeId prop) recolours the scene
+  const fc = fieldColors();
+  void themeId;
+  const pathColor = usingDrawn ? drawnPathColor : fc.autoPath;
 
   return (
     <div
@@ -867,13 +874,13 @@ export default function Field3D({
           setSelectedPt(null);
         }}
       >
-        <color attach="background" args={['#070a12']} />
-        <fog attach="fog" args={['#070a12', 70 * fieldScale(), 160 * fieldScale()]} />
+        <color attach="background" args={[fc.sceneBg]} />
+        <fog attach="fog" args={[fc.sceneBg, 70 * fieldScale(), 160 * fieldScale()]} />
         <ambientLight intensity={0.55} />
-        <hemisphereLight args={['#bae6fd', '#0f172a', 0.5]} />
+        <hemisphereLight args={[fc.hemiSky, fc.hemiGround, 0.5]} />
         <directionalLight position={[20, 40, 15]} intensity={1.1} />
 
-        <FieldGround groundName={groundName} />
+        <FieldGround groundName={groundName} fc={fc} />
         <CameraGrabber target={cameraRef} />
 
         {/* Placing: a catcher over the whole ground plus a preview of the piece under the cursor */}
@@ -989,7 +996,7 @@ export default function Field3D({
             selectedItem
               ? 'left-4 right-[21.5rem] max-w-[34rem]' // keep clear of the gate inspector on the right
               : 'left-1/2 -translate-x-1/2 w-[min(34rem,calc(100%-2rem))]'
-          } bg-[#090d16]/95 border border-slate-700 rounded-xl p-2.5 shadow-2xl font-mono text-[11px] text-slate-300 space-y-2`}
+          } bg-tg-panel/95 border border-slate-700 rounded-xl p-2.5 shadow-2xl font-mono text-[11px] text-slate-300 space-y-2`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="text-sky-300 font-bold">
@@ -1100,7 +1107,7 @@ export default function Field3D({
       )}
 
       {/* 3D view controls */}
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-[#090d16]/95 border border-slate-700 rounded-xl p-1 shadow-2xl font-mono text-[11px] whitespace-nowrap compact:bottom-2 compact:left-auto compact:right-2 compact:translate-x-0 compact:max-w-[calc(100%-8.75rem)] compact:overflow-x-auto no-scrollbar">
+      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-tg-panel/95 border border-slate-700 rounded-xl p-1 shadow-2xl font-mono text-[11px] whitespace-nowrap compact:bottom-2 compact:left-auto compact:right-2 compact:translate-x-0 compact:max-w-[calc(100%-8.75rem)] compact:overflow-x-auto no-scrollbar">
         <button
           onClick={() => setCameraMode('orbit')}
           className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition ${

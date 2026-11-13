@@ -39,6 +39,9 @@ import {
 } from './utils/customEquipment';
 import { parseTrackText } from './utils/trackExporter';
 import { listenForIncomingTrackFiles } from './utils/incomingTrackFile';
+import { ThemePicker } from './components/ThemePicker';
+import { applyTheme, loadThemeId } from './theme/engine';
+import { PALETTES } from './theme/palettes';
 import {
   DEFAULT_GROUND,
   Ground,
@@ -61,6 +64,13 @@ interface HistorySnapshot {
 }
 
 export default function App() {
+  // Colour theme (applied to the page in main.tsx and on change)
+  const [themeId, setThemeId] = useState<string>(() => loadThemeId());
+  const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
+  const handleSelectTheme = useCallback((id: string) => {
+    applyTheme(id);
+    setThemeId(id);
+  }, []);
   // Phone layout: inventory sidebar is a slide-in drawer
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   // Grounds (venues) — each has its own size and autosaved layout
@@ -587,6 +597,7 @@ export default function App() {
     cursorWorldCoords,
     showDistances,
     drawnPathColor,
+    themeId,
   ]);
 
   // Item deletion with clean sequence compaction
@@ -1922,7 +1933,7 @@ export default function App() {
   };
 
   return (
-    <div id="app-shell" className="relative flex w-screen overflow-hidden bg-[#090d16] text-slate-100 select-none">
+    <div id="app-shell" className="relative flex w-screen overflow-hidden bg-tg-panel text-slate-100 select-none">
       {/* Phone layout: dim the field behind the open inventory drawer */}
       {isMobilePanelOpen && (
         <div
@@ -1971,12 +1982,17 @@ export default function App() {
         onChangeDefaultPlacementYaw={setDefaultPlacementYaw}
         mobileOpen={isMobilePanelOpen}
         onCloseMobile={() => setIsMobilePanelOpen(false)}
+        themeName={PALETTES.find((p) => p.id === themeId)?.name ?? 'Classic Night'}
+        onOpenThemePicker={() => {
+          setIsThemePickerOpen(true);
+          setIsMobilePanelOpen(false);
+        }}
       />
 
       {/* Main Field Designer Canvas Viewport */}
       <main
         ref={containerRef}
-        className="relative flex-1 min-w-0 h-full overflow-hidden bg-[#070a12]"
+        className="relative flex-1 min-w-0 h-full overflow-hidden bg-tg-deep"
         onScroll={(e) => {
           // overflow-hidden still allows focus-driven scrolling; never let the field slide sideways
           if (e.currentTarget.scrollLeft || e.currentTarget.scrollTop) {
@@ -1989,7 +2005,7 @@ export default function App() {
         <button
           type="button"
           onClick={() => setIsMobilePanelOpen(true)}
-          className="hidden compact:flex absolute top-2 left-2 z-30 w-10 h-10 items-center justify-center rounded-xl bg-[#090d16]/95 border border-slate-700 text-sky-300 shadow-xl active:bg-slate-800"
+          className="hidden compact:flex absolute top-2 left-2 z-30 w-10 h-10 items-center justify-center rounded-xl bg-tg-panel/95 border border-slate-700 text-sky-300 shadow-xl active:bg-slate-800"
           aria-label="Open equipment panel"
         >
           <Menu className="w-5 h-5" />
@@ -2097,7 +2113,7 @@ export default function App() {
 
         {/* Live Coordinate Cursor Readout Pill */}
         {cursorWorldCoords && (
-          <div className="absolute bottom-3 right-4 z-10 pointer-events-none compact:hidden bg-[#090d16]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400">
+          <div className="absolute bottom-3 right-4 z-10 pointer-events-none compact:hidden bg-tg-panel/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400">
             <span className="text-slate-400">CURSOR: </span>
             <span className="text-cyan-400 font-bold">X {cursorWorldCoords.x.toFixed(1)}m</span>
             <span className="text-slate-600 mx-1">·</span>
@@ -2149,10 +2165,10 @@ export default function App() {
 
         {/* 3D field view (overlays the 2D map; HUD and inspector stay on top) */}
         {viewMode === '3d' && (
-          <div className="absolute inset-0 z-[5] bg-[#070a12]">
+          <div className="absolute inset-0 z-[5] bg-tg-deep">
             <Suspense
               fallback={
-                <div className="absolute inset-0 flex items-center justify-center bg-[#070a12] text-slate-400 font-mono text-xs">
+                <div className="absolute inset-0 flex items-center justify-center bg-tg-deep text-slate-400 font-mono text-xs">
                   Loading 3D view…
                 </div>
               }
@@ -2160,6 +2176,7 @@ export default function App() {
               <Field3D
                 key={activeGroundId}
                 groundName={activeGround.name}
+                themeId={themeId}
                 items={items}
                 drawnPath={drawnPath}
                 closeLoop={closeLoop}
@@ -2186,7 +2203,7 @@ export default function App() {
         )}
 
         {/* 2D / 3D view switch */}
-        <div className="absolute bottom-16 left-4 z-20 flex items-center bg-[#090d16]/95 border border-slate-700 rounded-xl p-1 shadow-2xl font-mono text-[11px] compact:bottom-2 compact:left-2">
+        <div className="absolute bottom-16 left-4 z-20 flex items-center bg-tg-panel/95 border border-slate-700 rounded-xl p-1 shadow-2xl font-mono text-[11px] compact:bottom-2 compact:left-2">
           {(['2d', '3d'] as const).map((mode) => (
             <button
               key={mode}
@@ -2204,6 +2221,14 @@ export default function App() {
           ))}
         </div>
       </main>
+
+      {/* Colour theme picker */}
+      <ThemePicker
+        isOpen={isThemePickerOpen}
+        activeId={themeId}
+        onSelect={handleSelectTheme}
+        onClose={() => setIsThemePickerOpen(false)}
+      />
 
       {/* Save, Export & Load Track Dialog */}
       <SaveLoadModal

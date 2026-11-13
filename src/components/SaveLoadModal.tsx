@@ -131,9 +131,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
       id="save-load-modal"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-xl bg-[#090d16] border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono text-slate-200 max-h-[90vh]">
+      <div className="w-full max-w-xl bg-tg-panel border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono text-slate-200 max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-[#0f172a]">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center gap-2">
             <FolderOpen className="w-5 h-5 text-sky-400" />
             <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
@@ -342,7 +342,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-slate-800 bg-[#0f172a] flex justify-end">
+        <div className="px-5 py-3 border-t border-slate-800 bg-slate-900 flex justify-end">
           <button
             onClick={onClose}
             className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-mono transition"

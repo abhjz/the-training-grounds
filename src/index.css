@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* App surfaces; colour themes override these (src/theme/engine.ts) */
+@theme {
+  --color-tg-panel: #090d16;
+  --color-tg-deep: #070a12;
+}
+
 /* Phone / small-tablet layout: narrow screens, or any landscape phone (short height). */
 @custom-variant compact (@media (max-width: 1023px), (max-height: 520px));
 

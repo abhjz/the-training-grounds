@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   X,
+  Palette,
 } from 'lucide-react';
 import { EquipmentDef, PlacedItem } from '../types';
 import { EQUIPMENT_INVENTORY } from '../constants/equipment';
@@ -59,6 +60,9 @@ interface SidebarProps {
   /** Phone layout: whether the slide-in drawer is open */
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  /** Colour theme */
+  themeName?: string;
+  onOpenThemePicker?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -89,6 +93,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onChangeDefaultPlacementYaw,
   mobileOpen = false,
   onCloseMobile,
+  themeName,
+  onOpenThemePicker,
 }) => {
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [creatingEquipment, setCreatingEquipment] = React.useState(false);
@@ -116,12 +122,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="inventory-sidebar"
-      className={`w-80 md:w-88 flex flex-col bg-[#0f172a]/95 backdrop-blur-md border-r border-slate-800 text-slate-200 select-none z-20 shrink-0 h-full shadow-2xl compact:fixed compact:inset-y-0 compact:left-0 compact:z-50 compact:w-[min(22rem,88vw)] compact:bg-[#0f172a] compact:transition-transform compact:duration-200 safe-drawer ${
+      className={`w-80 md:w-88 flex flex-col bg-slate-900/95 backdrop-blur-md border-r border-slate-800 text-slate-200 select-none z-20 shrink-0 h-full shadow-2xl compact:fixed compact:inset-y-0 compact:left-0 compact:z-50 compact:w-[min(22rem,88vw)] compact:bg-slate-900 compact:transition-transform compact:duration-200 safe-drawer ${
         mobileOpen ? '' : 'compact:-translate-x-full compact:shadow-none'
       }`}
     >
       {/* App Header */}
-      <div className="p-4 border-b border-slate-800 bg-[#090d16]">
+      <div className="p-4 border-b border-slate-800 bg-tg-panel">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white font-bold font-mono text-sm">
             TG
@@ -398,7 +404,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <div className="flex items-center gap-3">
                 {/* Visual Icon Matching Exact Spec */}
-                <div className="w-12 h-10 rounded bg-[#090d16] border border-slate-800 flex items-center justify-center shrink-0 p-1">
+                <div className="w-12 h-10 rounded bg-tg-panel border border-slate-800 flex items-center justify-center shrink-0 p-1">
                   <EquipmentVisualPreview visualType={eq.visualType} />
                 </div>
 
@@ -636,7 +642,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Footer Action Buttons */}
-      <div className="p-3 border-t border-slate-800 bg-[#090d16] space-y-2">
+      <div className="p-3 border-t border-slate-800 bg-tg-panel space-y-2">
         <button
           id="btn-save-track"
           onClick={onOpenSaveModal}
@@ -645,6 +651,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <Download className="w-4 h-4" />
           Save & Export Track
         </button>
+
+        {onOpenThemePicker && (
+          <button
+            id="btn-theme"
+            onClick={onOpenThemePicker}
+            className="w-full py-2 px-3 rounded border border-slate-800 bg-slate-900 hover:border-sky-500/60 hover:bg-slate-800 text-xs font-mono text-slate-300 transition flex items-center justify-center gap-1.5"
+            title="Change the app's colour theme"
+          >
+            <Palette className="w-3.5 h-3.5 text-sky-400" />
+            <span>Theme:</span>
+            <span className="text-sky-300 font-bold truncate">{themeName}</span>
+          </button>
+        )}
 
         <button
           id="btn-clear-field"

@@ -113,7 +113,7 @@ export function EquipmentCreator({
     >
       <form
         onSubmit={submit}
-        className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-[#090d16] border border-slate-700 rounded-2xl shadow-2xl p-5 font-mono text-xs text-slate-300 space-y-4"
+        className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-tg-panel border border-slate-700 rounded-2xl shadow-2xl p-5 font-mono text-xs text-slate-300 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">

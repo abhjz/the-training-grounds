@@ -8,6 +8,7 @@ import {
 } from '../constants/equipment';
 import { drawWatermarkText } from './watermark';
 import { getManeuverBadgeLayout } from './trackMath';
+import { fieldColors, rgba } from '../theme/engine';
 
 export interface ViewportTransform {
   scale: number; // pixels per meter
@@ -74,9 +75,12 @@ export function drawFieldScene(options: RenderOptions) {
 
   const { scale, offsetX, offsetY } = viewport;
 
+  // Colours of the active theme (src/theme/engine.ts)
+  const fc = fieldColors();
+
   // Clear background
   ctx.save();
-  ctx.fillStyle = '#080c14'; // deep dark navy background outside field
+  ctx.fillStyle = fc.outside; // background outside the field
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
   // Set world coordinate transform: screen = offset + world * scale
@@ -88,17 +92,17 @@ export function drawFieldScene(options: RenderOptions) {
   const fieldH = FIELD_HEIGHT_M;
 
   // Field Grass / Turf Surface (Dark modern high-tech field surface)
-  ctx.fillStyle = '#0f172a'; // slate-900 turf
+  ctx.fillStyle = fc.turf;
   ctx.fillRect(0, 0, fieldW, fieldH);
 
   // Field border outer
-  ctx.strokeStyle = '#334155';
+  ctx.strokeStyle = fc.border;
   ctx.lineWidth = 0.15;
   ctx.strokeRect(0, 0, fieldW, fieldH);
 
   // 2. Draw 1-Meter Grid Lines
   ctx.lineWidth = 0.03;
-  ctx.strokeStyle = 'rgba(71, 85, 105, 0.25)'; // faint 1m lines
+  ctx.strokeStyle = fc.gridFaint; // faint 1m lines
 
   // Vertical 1m lines
   for (let x = 1; x < fieldW; x++) {
@@ -122,7 +126,7 @@ export function drawFieldScene(options: RenderOptions) {
 
   // Major 5m Grid Lines
   ctx.lineWidth = 0.06;
-  ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+  ctx.strokeStyle = fc.gridMajor;
   for (let x = 5; x < fieldW; x += 5) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
@@ -137,7 +141,7 @@ export function drawFieldScene(options: RenderOptions) {
   }
 
   // Field Center Markings
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.2)';
+  ctx.strokeStyle = fc.gridAccent;
   ctx.lineWidth = 0.06;
   ctx.beginPath();
   ctx.arc(fieldW / 2, fieldH / 2, 2.5, 0, Math.PI * 2);
@@ -273,7 +277,7 @@ function drawPerimeterFenceLabels(
 
   // Outer field dimensions text
   ctx.font = 'bold 0.85px "JetBrains Mono", monospace';
-  ctx.fillStyle = '#64748b';
+  ctx.fillStyle = fieldColors().label;
   ctx.fillText(`${fieldW.toFixed(1)} METERS WIDTH`, fieldW / 2, fieldH - 0.9);
 
   ctx.save();
@@ -301,14 +305,14 @@ function drawFlightPath(
     ctx.beginPath();
     ctx.moveTo(seg.fromX, seg.fromY);
     ctx.lineTo(seg.toX, seg.toY);
-    ctx.strokeStyle = faint ? 'rgba(6, 182, 212, 0.08)' : 'rgba(6, 182, 212, 0.25)';
+    ctx.strokeStyle = rgba(fieldColors().autoPath, faint ? 0.08 : 0.25);
     ctx.lineWidth = 0.35;
     ctx.stroke();
 
     // Inner dashed line
     ctx.save();
     ctx.setLineDash([0.8, 0.5]);
-    ctx.strokeStyle = faint ? 'rgba(34, 211, 238, 0.35)' : '#22d3ee';
+    ctx.strokeStyle = faint ? rgba(fieldColors().autoPath, 0.35) : fieldColors().autoPath;
     ctx.lineWidth = faint ? 0.08 : 0.14;
     ctx.stroke();
     ctx.restore();
@@ -361,8 +365,8 @@ function drawFlightPath(
       ctx.translate(midX, midY);
 
       // Badge background
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.8)';
+      ctx.fillStyle = fieldColors().pillBg;
+      ctx.strokeStyle = fieldColors().pillBorder;
       ctx.lineWidth = 0.05;
 
       ctx.beginPath();
@@ -371,7 +375,7 @@ function drawFlightPath(
       ctx.stroke();
 
       // Badge text
-      ctx.fillStyle = '#38bdf8';
+      ctx.fillStyle = fieldColors().pillText;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(text, 0, 0.05);

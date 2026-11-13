@@ -66,7 +66,7 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
   return (
     <div
       id="item-inspector-panel"
-      className="absolute bottom-14 right-4 z-20 w-80 max-h-[calc(100%-4.5rem)] compact:left-2 compact:right-2 compact:w-auto compact:bottom-14 compact:max-h-[48%] overflow-y-auto bg-[#090d16]/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3.5 shadow-2xl text-xs font-mono text-slate-200"
+      className="absolute bottom-14 right-4 z-20 w-80 max-h-[calc(100%-4.5rem)] compact:left-2 compact:right-2 compact:w-auto compact:bottom-14 compact:max-h-[48%] overflow-y-auto bg-tg-panel/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3.5 shadow-2xl text-xs font-mono text-slate-200"
     >
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">

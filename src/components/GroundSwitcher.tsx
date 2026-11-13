@@ -63,7 +63,7 @@ export const GroundSwitcher: React.FC<GroundSwitcherProps> = ({ grounds, activeG
       {open && (
         <div
           role="listbox"
-          className="absolute left-0 top-full mt-2 z-50 w-72 bg-[#090d16] border border-slate-700 rounded-xl shadow-2xl p-1.5 font-mono text-xs"
+          className="absolute left-0 top-full mt-2 z-50 w-72 bg-tg-panel border border-slate-700 rounded-xl shadow-2xl p-1.5 font-mono text-xs"
         >
           <div className="px-2 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-slate-500">Grounds</div>
           <div className="max-h-72 overflow-y-auto space-y-0.5">
@@ -198,7 +198,7 @@ function CreateGroundDialog({
     >
       <form
         onSubmit={submit}
-        className="w-full max-w-sm bg-[#090d16] border border-slate-700 rounded-2xl shadow-2xl p-5 font-mono text-xs text-slate-300 space-y-4"
+        className="w-full max-w-sm bg-tg-panel border border-slate-700 rounded-2xl shadow-2xl p-5 font-mono text-xs text-slate-300 space-y-4"
       >
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-sm font-bold text-slate-100 uppercase tracking-wider">

@@ -120,7 +120,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
         className="absolute top-3 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none compact:top-2 compact:left-14 compact:right-2 compact:gap-2 compact:flex-wrap compact:items-start"
       >
         {/* Left Telemetry Cluster */}
-        <div className="flex items-center gap-2 pointer-events-auto bg-[#090d16]/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 shadow-xl font-mono compact:flex-1 compact:min-w-0 compact:h-10 compact:gap-0 compact:px-2 compact:py-0 compact:overflow-x-auto no-scrollbar">
+        <div className="flex items-center gap-2 pointer-events-auto bg-tg-panel/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 shadow-xl font-mono compact:flex-1 compact:min-w-0 compact:h-10 compact:gap-0 compact:px-2 compact:py-0 compact:overflow-x-auto no-scrollbar">
           {/* Total Track Distance */}
           <div className="flex items-center gap-2 pr-3 border-r border-slate-800 compact:pr-2 compact:gap-1.5 shrink-0">
             <div className={`w-2.5 h-2.5 rounded-full ${hasDrawnPath ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : 'bg-sky-400'} animate-pulse`} />
@@ -187,7 +187,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
           className={`hidden compact:flex pointer-events-auto shrink-0 w-10 h-10 items-center justify-center rounded-xl border shadow-xl ${
             showMobileTools || isDrawMode
               ? 'bg-sky-500/20 border-sky-500/60 text-sky-300'
-              : 'bg-[#090d16]/95 border-slate-700 text-slate-300'
+              : 'bg-tg-panel/95 border-slate-700 text-slate-300'
           }`}
           aria-label={showMobileTools ? 'Hide tools' : 'Show tools'}
         >
@@ -195,7 +195,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
         </button>
 
         {/* Right Controls Cluster */}
-        <div className={`flex flex-wrap max-w-full items-center gap-2 pointer-events-auto bg-[#090d16]/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800 shadow-xl font-mono text-xs ${
+        <div className={`flex flex-wrap max-w-full items-center gap-2 pointer-events-auto bg-tg-panel/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800 shadow-xl font-mono text-xs ${
           showMobileTools ? 'compact:basis-full compact:gap-1.5 compact:px-1.5' : 'compact:hidden'
         }`}>
           {/* Draw Flight Path Toggle Button */}
@@ -272,7 +272,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
               />
             </button>
             {showColorPicker && (
-              <div className="absolute top-10 right-0 z-40 bg-[#090d16] border border-slate-700 rounded-xl p-2 shadow-2xl flex items-center gap-1.5">
+              <div className="absolute top-10 right-0 z-40 bg-tg-panel border border-slate-700 rounded-xl p-2 shadow-2xl flex items-center gap-1.5">
                 {TRACK_LINE_COLORS.map((c) => (
                   <button
                     key={c.id}
@@ -341,7 +341,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
               </button>
 
               {showYawPopover && (
-                <div className="absolute top-10 right-0 z-40 w-64 bg-[#090d16]/95 backdrop-blur-md border border-slate-700 rounded-xl p-3 shadow-2xl font-mono text-xs text-slate-200 space-y-2">
+                <div className="absolute top-10 right-0 z-40 w-64 bg-tg-panel/95 backdrop-blur-md border border-slate-700 rounded-xl p-3 shadow-2xl font-mono text-xs text-slate-200 space-y-2">
                   <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
                     <span className="font-bold text-amber-400 flex items-center gap-1">
                       <Compass className="w-3 h-3 text-amber-400" />
@@ -505,7 +505,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
 
       {/* Floating Draw Mode Toolbar (Visible when in Draw Track Line mode) */}
       {isDrawMode && (
-        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-[#090d16]/95 backdrop-blur-md border border-amber-500/60 text-slate-200 px-4 py-2 rounded-xl shadow-2xl font-mono text-xs flex flex-wrap items-center gap-3 compact:top-auto compact:bottom-14 compact:left-2 compact:right-2 compact:translate-x-0 compact:px-2.5 compact:gap-2 compact:justify-center">
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-30 bg-tg-panel/95 backdrop-blur-md border border-amber-500/60 text-slate-200 px-4 py-2 rounded-xl shadow-2xl font-mono text-xs flex flex-wrap items-center gap-3 compact:top-auto compact:bottom-14 compact:left-2 compact:right-2 compact:translate-x-0 compact:px-2.5 compact:gap-2 compact:justify-center">
           <div className="flex items-center gap-2 pr-3 border-r border-slate-800 text-amber-300 font-semibold">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             <span>
@@ -627,7 +627,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
 
       {/* Shortcuts Popover */}
       {showShortcuts && (
-        <div className="absolute top-16 right-4 z-30 w-72 compact:left-2 compact:right-2 compact:w-auto compact:max-h-[70%] compact:overflow-y-auto bg-[#090d16]/95 backdrop-blur-md border border-slate-700 rounded-xl p-3.5 shadow-2xl text-xs font-mono text-slate-300">
+        <div className="absolute top-16 right-4 z-30 w-72 compact:left-2 compact:right-2 compact:w-auto compact:max-h-[70%] compact:overflow-y-auto bg-tg-panel/95 backdrop-blur-md border border-slate-700 rounded-xl p-3.5 shadow-2xl text-xs font-mono text-slate-300">
           <div className="flex items-center justify-between pb-2 border-b border-slate-800 font-bold text-sky-400 uppercase">
             <span>Controls & Shortcuts</span>
             <button
@@ -696,7 +696,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
 
       {/* Bottom Field Dimensions / Safety Status Pill */}
       <div className="absolute bottom-3 left-4 z-10 pointer-events-none flex items-center gap-3 compact:hidden">
-        <div className="bg-[#090d16]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400 flex items-center gap-2">
+        <div className="bg-tg-panel/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400 flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-amber-400" />
           <span>Field: <strong className="text-slate-200">{FIELD_WIDTH_M}m × {FIELD_HEIGHT_M}m</strong></span>
           <span className="text-slate-600">|</span>
@@ -704,7 +704,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
         </div>
 
         {metrics.longestStraight > 0 && (
-          <div className="hidden sm:flex bg-[#090d16]/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400 items-center gap-2">
+          <div className="hidden sm:flex bg-tg-panel/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800 shadow-lg font-mono text-[11px] text-slate-400 items-center gap-2">
             <span>Longest Run: <strong className="text-sky-400">{metrics.longestStraight.toFixed(1)}m</strong></span>
             <span className="text-slate-600">|</span>
             <span>Shortest Gap: <strong className="text-amber-300">{metrics.shortestSegment.toFixed(1)}m</strong></span>

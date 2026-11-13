@@ -43,6 +43,19 @@ All versions and release notes: **[Releases](https://github.com/abhjz/the-traini
 |:--:|:--:|:--:|:--:|
 | <img src="docs/images/phone-3d.jpg" width="190" alt="Phone 3D view"> | <img src="docs/images/phone-drawer.jpg" width="190" alt="Phone equipment drawer"> | <img src="docs/images/phone-2d-tools.jpg" width="190" alt="Phone 2D with tools"> | <img src="docs/images/phone-landscape.jpg" width="330" alt="Phone landscape"> |
 
+
+### 🎨 Ten colour themes
+
+Pick a look under **Theme** in the sidebar. Each one follows a 60 · 30 · 10 palette: 60% background, 30% text, and a 10% accent for buttons and the race line.
+
+| Petrol Gaming | Sky Fresh (light) |
+|:--:|:--:|
+| <img src="docs/images/theme-petrol-3d.jpg" alt="Petrol Gaming theme"> | <img src="docs/images/theme-sky-2d.jpg" alt="Sky Fresh theme"> |
+| **Midnight Neon** | **Mauve Loud** |
+| <img src="docs/images/theme-neon-3d.jpg" alt="Midnight Neon theme"> | <img src="docs/images/theme-mauve-2d.jpg" alt="Mauve Loud theme"> |
+
+<p align="center"><img src="docs/images/theme-picker.jpg" alt="Theme picker with all ten palettes" width="80%"></p>
+
 ---
 
 ## ✨ Features
@@ -78,6 +91,12 @@ All versions and release notes: **[Releases](https://github.com/abhjz/the-traini
 - **3D model (.glb).** The field, gates and race line, which open in Blender and any glTF viewer.
 - **3D picture (.png).** The 3D view from your current camera angle.
 - **Undo / redo and autosave.** Your work is kept even if you close the app.
+
+### 🎨 Make it yours
+- **Ten colour themes.** Classic Night, Sky Fresh, Petrol Gaming, Monochrome Brown, Teal Brand, Midnight Neon, Navy Idea, Mauve Loud, Olive Standout and Brick Hook, with a live preview of each.
+- **Readable in every theme.** Every text colour is contrast-checked against its background, so labels stay legible even on bold palettes.
+- **The field stays dark.** The turf is tinted with the theme colour, so gates and the race line always stand out.
+- **Your choice is remembered** between launches.
 
 ### 📱 Works where you are
 - **Phones and tablets.** The equipment panel becomes a slide-in drawer and the tools fold into one button. Pinch to zoom and two-finger drag to pan in 2D.
