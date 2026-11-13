@@ -1,0 +1,10 @@
+{
+  "name": "training-grounds",
+  "productName": "Training Grounds",
+  "version": "1.0.1",
+  "description": "FPV drone racing track designer",
+  "author": "The Training Grounds",
+  "main": "main.cjs",
+  "private": true,
+  "license": "PolyForm-Noncommercial-1.0.0"
+}

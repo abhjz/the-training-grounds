@@ -1,0 +1,20 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+
+android/app/build
+android/.gradle
+*.apk
+
+desktop/web
+release
+
+# Local tooling / AI Studio leftovers
+.claude
+graphify-out
+metadata.json
+ios/App/App/public

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Training Grounds</string>
+    <string name="title_activity_main">Training Grounds</string>
+    <string name="package_name">com.trainingGrounds.fpvtrack</string>
+    <string name="custom_url_scheme">com.trainingGrounds.fpvtrack</string>
+</resources>

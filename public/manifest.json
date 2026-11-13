@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "The Training Grounds - FPV Track Designer",
+  "short_name": "FPV Track",
+  "description": "Professional 57m x 43m FPV Drone Racing Track Designer and Course Planner.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#090d16",
+  "background_color": "#070a12",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512 192x192 180x180",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

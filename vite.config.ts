@@ -1,0 +1,33 @@
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import {defineConfig} from 'vite';
+
+export default defineConfig(() => {
+  return {
+    plugins: [react(), tailwindcss()],
+    // Tailwind v4 colours are oklch(); older Android WebViews can't parse them and
+    // render text near-black. Lightning CSS adds hex/rgb fallbacks for these targets.
+    css: {
+      lightningcss: {
+        targets: { chrome: 70 << 16, safari: 13 << 16 },
+      },
+    },
+    build: {
+      cssMinify: 'lightningcss' as const,
+      cssTarget: ['chrome70', 'safari13'],
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    server: {
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+  };
+});

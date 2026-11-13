@@ -1,0 +1,15 @@
+{
+  "appId": "com.trainingGrounds.fpvtrack",
+  "appName": "Training Grounds",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#070a12"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "DARK"
+    }
+  }
+}
