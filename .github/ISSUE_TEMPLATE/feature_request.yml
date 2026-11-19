@@ -1,0 +1,21 @@
+name: 💡 Idea or request
+description: A gate, maneuver, look or feature you'd like to see
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      placeholder: e.g. a 3-tier cube gate, a "power loop" maneuver, export to PDF…
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: How would you use it?
+      description: At the field, at a race, for practice… a real example helps
+  - type: textarea
+    id: extra
+    attributes:
+      label: Pictures or links
+      description: Photos of the gate, a video of the maneuver, a track drawing

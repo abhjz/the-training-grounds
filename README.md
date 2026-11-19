@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://github.com/abhjz/the-training-grounds/actions/workflows/check.yml"><img src="https://github.com/abhjz/the-training-grounds/actions/workflows/check.yml/badge.svg" alt="Check"></a>
+  <a href="https://github.com/abhjz/the-training-grounds/releases/latest"><img src="https://img.shields.io/github/v/release/abhjz/the-training-grounds?label=latest" alt="Latest release"></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue" alt="License"></a>
+</p>
+
 <p align="center"><img src="docs/images/hero.svg" alt="The Training Grounds — FPV drone racing track designer" width="100%"></p>
 
 # 🏁 The Training Grounds
@@ -183,8 +189,12 @@ The app is written in React + TypeScript with Vite, Tailwind CSS and three.js (r
 ```bash
 npm install
 npm run dev          # web version at http://localhost:3000
+npm run lint         # type check
+npm test             # unit tests for the race line and gate maneuvers
 npm run build        # production web build in dist/
 ```
+
+Every push and pull request is checked on GitHub (type check, tests and build). See [CONTRIBUTING.md](CONTRIBUTING.md) before sending changes.
 
 | Build | Command | Needs |
 |---|---|---|
@@ -201,7 +211,7 @@ ios/            Capacitor iOS project (not released yet)
 docs/images/    README pictures
 ```
 
-Ideas, bugs and pull requests are welcome. Please [open an issue](https://github.com/abhjz/the-training-grounds/issues).
+Ideas, bugs and pull requests are welcome. [Report a bug or suggest an idea](https://github.com/abhjz/the-training-grounds/issues/new/choose); the forms ask for the details that help most.
 
 ## 📜 License
 

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📥 Download the latest version
+    url: https://github.com/abhjz/the-training-grounds/releases/latest
+    about: Android, Windows and Mac downloads with checksums
+  - name: 💼 Commercial use
+    url: https://github.com/abhjz/the-training-grounds#-license
+    about: The app is free for noncommercial use. Open an issue to ask about anything else.

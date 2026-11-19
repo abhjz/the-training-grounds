@@ -12,7 +12,8 @@
     "desktop:prepare": "vite build && rm -rf desktop/web && cp -R dist desktop/web",
     "desktop:start": "npm run desktop:prepare && electron desktop",
     "dist:win": "npm run desktop:prepare && electron-builder --win --x64",
-    "dist:mac": "npm run desktop:prepare && electron-builder --mac --arm64 --x64"
+    "dist:mac": "npm run desktop:prepare && electron-builder --mac --arm64 --x64",
+    "test": "vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^8.6.2",
@@ -45,10 +46,11 @@
     "autoprefixer": "^10.4.21",
     "electron": "^45.3.2",
     "electron-builder": "^26.18.0",
-    "esbuild": "^0.27.0",
+    "esbuild": "^0.28.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.21.0",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
   },
   "build": {
     "appId": "com.trainingGrounds.fpvtrack",
@@ -96,7 +98,7 @@
       "title": "Training Grounds ${version}"
     }
   },
-  "description": "FPV drone racing track designer \u2014 2D/3D editor, race line, lap times, share layouts",
+  "description": "FPV drone racing track designer — 2D/3D editor, race line, lap times, share layouts",
   "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
     "type": "git",
