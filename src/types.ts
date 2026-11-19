@@ -33,6 +33,9 @@ export interface TrackPoint {
   y: number; // in meters (0 to 43)
   z?: number; // altitude in meters (0 to 5m)
   color?: string; // custom line color for this stroke segment
+  /** Race line editor: 1 = a control point you placed, 0 = a point on the curve between them.
+   *  Lets the editor rebuild exactly the points you set after a reload, undo or view switch. */
+  k?: 0 | 1;
 }
 
 export interface PlacedItem {

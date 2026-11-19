@@ -23,6 +23,13 @@ import {
 } from '../utils/raceLine';
 import { RaceLineHandles, PointDragManager, PointDragState, makePointDrag } from './RaceLineEditor';
 import { FieldColors, fieldColors } from '../theme/engine';
+import { SunkenCity, SunkenDeck, SUNKEN_FOG } from './SunkenScene';
+import { CoastalField, CoastalSunsetWorld, SUN_DIR } from './CoastalSunsetScene';
+import { ShowroomField, ShowroomWorld } from './ShowroomScene';
+import { TradingField, TradingFloorWorld } from './TradingFloorScene';
+import { SHOWROOM } from '../theme/showroom';
+import { COASTAL_SUNSET } from '../theme/coastalSunset';
+import { useMediaMatch } from '../hooks/useMediaMatch';
 
 // ---------------------------------------------------------------------------
 // Coordinate mapping
@@ -231,8 +238,8 @@ function Cube({ s, h: height, y0, color, emissive }: { s: number; h?: number; y0
 /** Which stacked tier (0-based) the pilot is meant to fly through, if any. */
 function targetTierIndex(item: PlacedItem): number | null {
   const t = item.targetTier;
-  if (t === 'tier1' || t === 1 || t === 'ladder_up') return 0;
-  if (t === 'tier2' || t === 2) return 1;
+  if (t === 'tier1' || t === 1 || t === 'ladder_up' || t === 'cube1_exit') return 0;
+  if (t === 'tier2' || t === 2 || t === 'cube2_dive') return 1;
   if (t === 'tier3' || t === 3) return 2;
   if (t === 'tier4' || t === 4) return 3;
   return null;
@@ -843,6 +850,7 @@ export default function Field3D({
   const hasPath = flightPoints.length >= 2;
   // Re-read on every render so a theme switch (themeId prop) recolours the scene
   const fc = fieldColors();
+  const narrowViewport = useMediaMatch('(max-width: 767px)');
   void themeId;
   const pathColor = usingDrawn ? drawnPathColor : fc.autoPath;
 
@@ -863,7 +871,7 @@ export default function Field3D({
     >
       <Canvas
         camera={{ position: defaultCameraPos(), fov: 50, near: 0.05, far: 500 * fieldScale() }}
-        dpr={[1, 2]}
+        dpr={[1, fc.style === 'coast' && narrowViewport ? 1.25 : 2]}
         onPointerMissed={() => {
           // A drag that ends off the gate shouldn't count as a click on empty space
           if (justDraggedRef.current) {
@@ -875,12 +883,57 @@ export default function Field3D({
         }}
       >
         <color attach="background" args={[fc.sceneBg]} />
-        <fog attach="fog" args={[fc.sceneBg, 70 * fieldScale(), 160 * fieldScale()]} />
-        <ambientLight intensity={0.55} />
-        <hemisphereLight args={[fc.hemiSky, fc.hemiGround, 0.5]} />
-        <directionalLight position={[20, 40, 15]} intensity={1.1} />
-
-        <FieldGround groundName={groundName} fc={fc} />
+        {fc.style === 'trading' ? (
+          <>
+            {/* Trading Floor: flat and dark; candlesticks rise and fall around the field */}
+            <fog attach="fog" args={['#0B0E11', 90 * fieldScale(), 260 * fieldScale()]} />
+            <ambientLight intensity={0.55} color="#FFFFFF" />
+            <hemisphereLight args={['#EAECEF', '#0B0E11', 0.6]} />
+            <directionalLight position={[-20, 50, 30]} intensity={1.0} color="#FFFFFF" />
+            <TradingField groundName={groundName} fc={fc} />
+            <TradingFloorWorld scale={fieldScale()} />
+          </>
+        ) : fc.style === 'showroom' ? (
+          <>
+            {/* Showroom: soft, even studio light over polished concrete; a hazy city far away */}
+            <fog attach="fog" args={[SHOWROOM.scene.fog, 120 * fieldScale(), 380 * fieldScale()]} />
+            <ambientLight intensity={0.7} color="#FFFFFF" />
+            <hemisphereLight args={['#F4F5F7', '#6E7177', 0.75]} />
+            <directionalLight position={[-30, 60, 40]} intensity={1.15} color="#FFF8EE" />
+            <directionalLight position={[40, 30, -30]} intensity={0.35} color="#E6EEFF" />
+            <ShowroomField groundName={groundName} fc={fc} />
+            <ShowroomWorld scale={fieldScale()} />
+          </>
+        ) : fc.style === 'coast' ? (
+          <>
+            {/* Coastal Sunset: golden hour over the waterfront; the sun sits low behind the city */}
+            <fog attach="fog" args={[COASTAL_SUNSET.scene.fog, 140 * fieldScale(), 400 * fieldScale()]} />
+            <ambientLight intensity={0.42} color="#E6D6EE" />
+            <hemisphereLight args={['#FFC59A', '#1E5A6A', 0.8]} />
+            <directionalLight position={[SUN_DIR.x * 120, 30, SUN_DIR.z * 120]} intensity={1.9} color="#FFB27A" />
+            <directionalLight position={[30, 22, 40]} intensity={0.45} color="#FF79B8" />
+            <CoastalField groundName={groundName} fc={fc} />
+            <CoastalSunsetWorld scale={fieldScale()} fogNear={140} fogFar={400} />
+          </>
+        ) : fc.style === 'dock' ? (
+          <>
+            {/* Animated look: a sunken city under the sea */}
+            <fog attach="fog" args={[SUNKEN_FOG.color, SUNKEN_FOG.near * fieldScale(), SUNKEN_FOG.far * fieldScale()]} />
+            <ambientLight intensity={0.35} color="#8FE0D6" />
+            <hemisphereLight args={['#C8FFF4', '#062228', 0.55]} />
+            <directionalLight position={[-12, 50, 8]} intensity={1.5} color="#FFF4DC" />
+            <SunkenDeck groundName={groundName} fc={fc} />
+            <SunkenCity scale={fieldScale()} />
+          </>
+        ) : (
+          <>
+            <fog attach="fog" args={[fc.sceneBg, 70 * fieldScale(), 160 * fieldScale()]} />
+            <ambientLight intensity={0.55} />
+            <hemisphereLight args={[fc.hemiSky, fc.hemiGround, 0.5]} />
+            <directionalLight position={[20, 40, 15]} intensity={1.1} />
+            <FieldGround groundName={groundName} fc={fc} />
+          </>
+        )}
         <CameraGrabber target={cameraRef} />
 
         {/* Placing: a catcher over the whole ground plus a preview of the piece under the cursor */}

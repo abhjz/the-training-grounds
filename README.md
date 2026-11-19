@@ -44,9 +44,25 @@ All versions and release notes: **[Releases](https://github.com/abhjz/the-traini
 | <img src="docs/images/phone-3d.jpg" width="190" alt="Phone 3D view"> | <img src="docs/images/phone-drawer.jpg" width="190" alt="Phone equipment drawer"> | <img src="docs/images/phone-2d-tools.jpg" width="190" alt="Phone 2D with tools"> | <img src="docs/images/phone-landscape.jpg" width="330" alt="Phone landscape"> |
 
 
-### 🎨 Ten colour themes
+### 🌊 Five looks
 
-Pick a look under **Theme** in the sidebar. Each one follows a 60 · 30 · 10 palette: 60% background, 30% text, and a 10% accent for buttons and the race line.
+Open **Theme** in the sidebar and pick a look. Your choice is remembered.
+
+- **Normal look.** The flat, technical editor, in any of the colour themes below.
+- **Animated look.** Rounded, game-style buttons with an amber glow. The field is a mossy wooden deck; in 3D it sits on the roof of a drowned tower in a sunken city, with light shafts, kelp, coral, fish, jellyfish and rising bubbles.
+- **Coastal Sunset.** A tropical ocean drive at golden hour: pastel art deco hotels with neon signs, palms, street lamps, cruising cars, speedboats, a helicopter and glittering water under a pink and gold sky.
+- **Showroom.** Radical subtraction: white surfaces, grey text, one electric blue for the main action, no shadows or gradients. In 3D the field is polished concrete that reflects the gates, under a hazy city sky.
+- **Trading Floor.** A near-black trading-platform style with one yellow for the main action, flat cards and green / red signals. In 3D, candlestick columns rise and fall around the field.
+
+| Animated look (3D) | Animated look (FPV) | Coastal Sunset (FPV) |
+|:--:|:--:|:--:|
+| <img src="docs/images/look-animated-3d.jpg" alt="Animated look: sunken city in 3D"> | <img src="docs/images/look-animated-fpv.jpg" alt="Animated look: FPV fly-through underwater"> | <img src="docs/images/coastal-sunset-3d.jpg" alt="Coastal Sunset look in FPV"> |
+
+The scenery is decoration only: it ignores clicks, stops moving when your device asks for reduced motion, and is left out of 3D model exports.
+
+### 🎨 Eleven colour themes
+
+Each colour theme follows a 60 · 30 · 10 palette: 60% background, 30% text, and a 10% accent for buttons and the race line.
 
 | Petrol Gaming | Sky Fresh (light) |
 |:--:|:--:|
@@ -93,7 +109,8 @@ Pick a look under **Theme** in the sidebar. Each one follows a 60 · 30 · 10 pa
 - **Undo / redo and autosave.** Your work is kept even if you close the app.
 
 ### 🎨 Make it yours
-- **Ten colour themes.** Classic Night, Sky Fresh, Petrol Gaming, Monochrome Brown, Teal Brand, Midnight Neon, Navy Idea, Mauve Loud, Olive Standout and Brick Hook, with a live preview of each.
+- **Five looks.** Normal, Showroom (white and minimal), Trading Floor (near-black and yellow), and two animated ones with their own 3D scenery: a sunken city and a coastal sunset.
+- **Eleven colour themes.** Classic Night, Sky Fresh, Petrol Gaming, Monochrome Brown, Teal Brand, Midnight Neon, Navy Idea, Mauve Loud, Olive Standout, Brick Hook and Coastal Sunset, with a live preview of each.
 - **Readable in every theme.** Every text colour is contrast-checked against its background, so labels stay legible even on bold palettes.
 - **The field stays dark.** The turf is tinted with the theme colour, so gates and the race line always stand out.
 - **Your choice is remembered** between launches.

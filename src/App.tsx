@@ -14,6 +14,7 @@ import {
 } from './constants/equipment';
 import { PRESET_TRACKS } from './constants/presets';
 import { drawFieldScene, ViewportTransform } from './utils/canvasRenderer';
+import { controlsToPath, pathToControls, shapeForGate } from './utils/raceLine';
 import {
   calculatePathAndMetrics,
   calculateDrawnPathMetrics,
@@ -40,8 +41,9 @@ import {
 import { parseTrackText } from './utils/trackExporter';
 import { listenForIncomingTrackFiles } from './utils/incomingTrackFile';
 import { ThemePicker } from './components/ThemePicker';
-import { applyTheme, loadThemeId } from './theme/engine';
+import { applyLook, applyTheme, loadLook, loadThemeId, Look } from './theme/engine';
 import { PALETTES } from './theme/palettes';
+import { COASTAL_SUNSET } from './theme/coastalSunset';
 import {
   DEFAULT_GROUND,
   Ground,
@@ -68,9 +70,18 @@ export default function App() {
   const [themeId, setThemeId] = useState<string>(() => loadThemeId());
   const [isThemePickerOpen, setIsThemePickerOpen] = useState(false);
   const handleSelectTheme = useCallback((id: string) => {
-    applyTheme(id);
+    applyTheme(id, 'normal'); // picking a colour palette means the normal look
     setThemeId(id);
+    setLook('normal');
   }, []);
+  // Look: the normal look or the Animated look (misty harbour, wooden dock on water)
+  const [look, setLook] = useState<Look>(() => loadLook());
+  const handleSelectLook = useCallback((next: Look) => {
+    applyLook(next);
+    setLook(next);
+  }, []);
+  // Changes whenever anything that recolours the field changes (canvas and 3D redraw on it)
+  const renderThemeKey = `${look}:${themeId}`;
   // Phone layout: inventory sidebar is a slide-in drawer
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
   // Grounds (venues) — each has its own size and autosaved layout
@@ -100,6 +111,8 @@ export default function App() {
   // Track settings
   const [closeLoop, setCloseLoop] = useState<boolean>(restored?.closeLoop ?? true);
   const [closeDrawnLoop, setCloseDrawnLoop] = useState<boolean>(restored?.closeDrawnLoop ?? false);
+  const closeDrawnLoopRef = useRef(closeDrawnLoop);
+  closeDrawnLoopRef.current = closeDrawnLoop;
   const [droneSpeedKmH, setDroneSpeedKmH] = useState<number>(restored?.droneSpeedKmH ?? 85);
   const [snapGrid, setSnapGrid] = useState<number>(restored?.snapGrid ?? 0.5); // 0.5m grid snap by default
 
@@ -110,6 +123,8 @@ export default function App() {
   const [isDrawingStroke, setIsDrawingStroke] = useState<boolean>(false);
   const [showDistances, setShowDistances] = useState<boolean>(restored?.showDistances ?? true);
   const [drawnPathColor, setDrawnPathColor] = useState<string>(restored?.drawnPathColor ?? '#ef4444');
+  const drawnPathColorRef = useRef(drawnPathColor);
+  drawnPathColorRef.current = drawnPathColor;
   const [viewMode, setViewMode] = useState<'2d' | '3d'>(() => {
     try {
       // 3D is the default; only stay in 2D if the user last chose it
@@ -597,7 +612,7 @@ export default function App() {
     cursorWorldCoords,
     showDistances,
     drawnPathColor,
-    themeId,
+    renderThemeKey,
   ]);
 
   // Item deletion with clean sequence compaction
@@ -638,6 +653,18 @@ export default function App() {
     setItems((prev) =>
       prev.map((item) => (item.id === id ? { ...item, ...updates } : item))
     );
+    // A new target tier or maneuver reshapes your own race line through that gate
+    // (the automatic line through the gates follows the items by itself)
+    if (target && ('maneuver' in updates || 'targetTier' in updates) && drawnPathRef.current.length >= 2) {
+      const updated = { ...target, ...updates };
+      const ctrl = pathToControls(drawnPathRef.current, closeDrawnLoopRef.current);
+      const next = shapeForGate(ctrl, updated);
+      if (next) {
+        const path = controlsToPath(next, drawnPathRef.current[0]?.color ?? drawnPathColorRef.current);
+        drawnPathRef.current = path;
+        setDrawnPath(path);
+      }
+    }
   }, [recordHistoryDebounced]);
 
   // Batch Yaw Rotation for all equipment inventory on the field
@@ -1982,7 +2009,7 @@ export default function App() {
         onChangeDefaultPlacementYaw={setDefaultPlacementYaw}
         mobileOpen={isMobilePanelOpen}
         onCloseMobile={() => setIsMobilePanelOpen(false)}
-        themeName={PALETTES.find((p) => p.id === themeId)?.name ?? 'Classic Night'}
+        themeName={look === 'animated' ? 'Animated look' : look === 'sunset' ? COASTAL_SUNSET.look.name : look === 'showroom' ? 'Showroom' : look === 'trading' ? 'Trading Floor' : PALETTES.find((p) => p.id === themeId)?.name ?? 'Classic Night'}
         onOpenThemePicker={() => {
           setIsThemePickerOpen(true);
           setIsMobilePanelOpen(false);
@@ -2176,7 +2203,7 @@ export default function App() {
               <Field3D
                 key={activeGroundId}
                 groundName={activeGround.name}
-                themeId={themeId}
+                themeId={renderThemeKey}
                 items={items}
                 drawnPath={drawnPath}
                 closeLoop={closeLoop}
@@ -2226,6 +2253,8 @@ export default function App() {
       <ThemePicker
         isOpen={isThemePickerOpen}
         activeId={themeId}
+        look={look}
+        onSelectLook={handleSelectLook}
         onSelect={handleSelectTheme}
         onClose={() => setIsThemePickerOpen(false)}
       />

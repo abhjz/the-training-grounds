@@ -2,10 +2,10 @@ import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { applyTheme, loadThemeId } from './theme/engine';
+import { applyTheme, loadLook, loadThemeId } from './theme/engine';
 
 // Apply the saved colour theme before the first paint
-applyTheme(loadThemeId());
+applyTheme(loadThemeId(), loadLook());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

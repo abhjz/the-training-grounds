@@ -6,6 +6,9 @@
 
 import { DEFAULT_THEME_ID, PALETTES, Palette } from './palettes';
 import { TW } from './tailwindColors';
+import { COASTAL_SUNSET } from './coastalSunset';
+import { SHOWROOM } from './showroom';
+import { TRADING_FLOOR } from './tradingFloor';
 
 // ---------------------------------------------------------------- colour maths
 type RGB = [number, number, number];
@@ -69,10 +72,21 @@ export interface FieldColors {
   grid3d: string;
   hemiSky: string;
   hemiGround: string;
+  /** Scene treatment for 2D and 3D fields. */
+  style?: 'flat' | 'dock' | 'coast' | 'showroom' | 'trading';
+  /** Animated look only */
+  water?: string;
+  waterDeep?: string;
+  wood?: string;
+  woodDark?: string;
+  fence?: string;
 }
+
+export type Look = 'normal' | 'animated' | 'sunset' | 'showroom' | 'trading';
 
 export interface Theme {
   id: string;
+  look?: Look;
   name: string;
   isLight: boolean;
   /** CSS custom properties to set on :root (empty for the original look) */
@@ -212,8 +226,141 @@ export function buildTheme(p: Palette): Theme {
   return { id: p.id, name: p.name, isLight, vars, field, chrome: vars['--color-tg-panel'] };
 }
 
+// ---------------------------------------------------------------- Animated look
+// Deep sea navy (60), soft white (30), lantern amber (10) for the interface; the field is a
+// mossy wooden deck. In 3D it sits on a drowned tower in a sunken city (SunkenScene.tsx).
+// The colour palette picker applies to the normal look only.
+export const ANIMATED_PALETTE: Palette = {
+  id: 'animated',
+  name: 'Animated',
+  mood: 'Sunken city',
+  base: '#1E2A44',
+  support: '#F2F2F5',
+  accent: '#F5A21B',
+};
+
+function buildAnimatedTheme(): Theme {
+  const t = buildTheme(ANIMATED_PALETTE);
+  const amber = '#FFC23D';
+  t.vars['--color-tg-panel'] = '#1B2540';
+  t.vars['--color-tg-deep'] = '#141C33';
+  t.field = {
+    ...t.field,
+    style: 'dock',
+    outside: '#0F4C55',
+    turf: '#A8714A',
+    border: '#4A2E1E',
+    gridFaint: 'rgba(255, 240, 220, 0.10)',
+    gridMajor: 'rgba(255, 240, 220, 0.26)',
+    gridAccent: 'rgba(255, 194, 61, 0.45)',
+    label: '#F2F2F5',
+    autoPath: amber,
+    pillBg: 'rgba(38, 44, 62, 0.9)',
+    pillBorder: 'rgba(220, 226, 240, 0.85)',
+    pillText: '#FFFFFF',
+    sceneBg: '#0F4C55',
+    ground: '#A8714A',
+    under: '#3B2418',
+    grid3d: '#7A4E32',
+    hemiSky: '#E6E2F2',
+    hemiGround: '#2C5674',
+    water: '#2F86A8',
+    waterDeep: '#174A6A',
+    wood: '#A8714A',
+    woodDark: '#6B4128',
+    fence: '#F2E6CF',
+  };
+  return { ...t, id: 'animated', name: 'Animated', look: 'animated', chrome: '#1B2540' };
+}
+
+function buildSunsetTheme(): Theme {
+  const { palette, ui, field, look } = COASTAL_SUNSET;
+  const t = buildTheme(palette);
+  t.vars['--color-tg-panel'] = ui.panel;
+  t.vars['--color-tg-deep'] = ui.deep;
+  t.vars['--tg-sunset-horizon'] = ui.horizon;
+  t.vars['--tg-sunset-water'] = ui.water;
+  t.vars['--tg-sunset-water-deep'] = ui.waterDeep;
+  t.vars['--tg-sunset-glow'] = ui.glow;
+  t.vars['--tg-sunset-sky-top'] = COASTAL_SUNSET.scene.sky[0];
+  t.vars['--tg-sunset-sky-mid'] = COASTAL_SUNSET.scene.sky[2];
+  return { ...t, id: look.id, name: look.name, look: 'sunset', field, chrome: ui.panel };
+}
+
+/** Showroom look: white and grey with one blue (src/theme/showroom.ts). */
+function buildShowroomTheme(): Theme {
+  const { palette, ui, field, look } = SHOWROOM;
+  const t = buildTheme(palette);
+  // Exact grey text scale instead of the generated one
+  const slate: Record<string, string> = {
+    '50': ui.carbon, '100': ui.carbon, '200': ui.graphite, '300': ui.graphite, '400': ui.pewter,
+    '500': ui.silver, '600': '#B5B6B8', '700': ui.paleSilver, '800': ui.cloud, '900': ui.white, '950': ui.ash,
+  };
+  for (const [step, v] of Object.entries(slate)) t.vars[`--color-slate-${step}`] = v;
+  // One blue: filled buttons use it as is, text and borders use it too
+  for (const fam of ['sky', 'cyan']) {
+    t.vars[`--color-${fam}-500`] = ui.blue;
+    t.vars[`--color-${fam}-600`] = ui.blue;
+    t.vars[`--color-${fam}-400`] = ui.blue;
+    t.vars[`--color-${fam}-300`] = ui.blueHover;
+    t.vars[`--color-${fam}-200`] = ui.blueHover;
+  }
+  // Monochrome plus one: amber, orange and yellow accents become the same blue
+  const blueScale: Record<string, string> = {
+    '50': '#EEF2FC', '100': '#DCE5FA', '200': ui.blueHover, '300': ui.blueHover, '400': ui.blue,
+    '500': ui.blue, '600': ui.blue, '700': '#B7C8F3', '800': '#DCE5FA', '900': '#EEF2FC', '950': '#F6F8FE',
+  };
+  for (const fam of ['amber', 'orange', 'yellow'])
+    for (const [step, v] of Object.entries(blueScale)) t.vars[`--color-${fam}-${step}`] = v;
+  t.vars['--color-tg-panel'] = ui.white;
+  t.vars['--color-tg-deep'] = ui.ash;
+  return { ...t, id: look.id, name: look.name, isLight: true, look: 'showroom', field: { ...t.field, ...field }, chrome: ui.white };
+}
+
+/** Trading Floor look: near-black, one yellow, green / red signals (src/theme/tradingFloor.ts). */
+function buildTradingTheme(): Theme {
+  const { palette, ui, field, look } = TRADING_FLOOR;
+  const t = buildTheme(palette);
+  const set = (fam: string, scale: Record<string, string>) => {
+    for (const [step, v] of Object.entries(scale)) t.vars[`--color-${fam}-${step}`] = v;
+  };
+  // Neutrals: canvas, cards one step up, hairlines that read as surface steps
+  set('slate', {
+    '950': ui.canvas, '900': ui.card, '800': ui.elevated, '700': ui.elevated, '600': '#474D57',
+    '500': ui.muted, '400': ui.mutedStrong, '300': '#B7BDC6', '200': ui.body, '100': ui.body, '50': '#FFFFFF',
+  });
+  // The one accent: yellow (also absorbs amber / orange so there is no second brand colour)
+  const yellow = {
+    '50': '#FFF9DB', '100': '#FEF1B0', '200': ui.yellow, '300': ui.yellow, '400': ui.yellow, '500': ui.yellow,
+    '600': ui.yellow, '700': ui.yellowActive, '800': '#5C4D10', '900': '#3A3A1F', '950': '#24220F',
+  };
+  for (const fam of ['sky', 'cyan', 'amber', 'yellow', 'orange']) set(fam, yellow);
+  // Trading signals
+  const green = { '50': '#E6FBF2', '100': '#B5F1D8', '200': '#6FE3B4', '300': ui.up, '400': ui.up, '500': ui.up, '600': '#0AA86A', '700': '#087F51', '800': '#0D5238', '900': '#0A3A28', '950': '#06261A' };
+  const red = { '50': '#FEECEE', '100': '#FCC3CA', '200': '#FA8A98', '300': ui.down, '400': ui.down, '500': ui.down, '600': '#D63A4F', '700': '#A62D3E', '800': '#5A1F28', '900': '#3A161C', '950': '#25100F' };
+  set('emerald', green);
+  set('green', green);
+  set('rose', red);
+  set('red', red);
+  t.vars['--color-tg-panel'] = ui.ink;
+  t.vars['--color-tg-deep'] = ui.canvas;
+  return { ...t, id: look.id, name: look.name, isLight: false, look: 'trading', field: { ...t.field, ...field }, chrome: ui.canvas };
+}
+
 // ---------------------------------------------------------------- current theme
 const STORAGE_KEY = 'training_grounds_theme';
+const LOOK_KEY = 'training_grounds_look';
+let currentLook: Look = 'normal';
+let currentPaletteId = DEFAULT_THEME_ID;
+
+export function loadLook(): Look {
+  try {
+    const saved = localStorage.getItem(LOOK_KEY);
+    if (saved === 'animated' || saved === 'sunset' || saved === 'showroom' || saved === 'trading') return saved;
+  } catch {}
+  return 'normal';
+}
+export const currentLookId = () => currentLook;
 let current: Theme = buildTheme(PALETTES[0]);
 
 /** Colours for code that draws directly (2D canvas). */
@@ -230,18 +377,34 @@ export function loadThemeId(): string {
 
 let appliedVars: string[] = [];
 /** Apply a theme to the page and remember it. */
-export function applyTheme(id: string): Theme {
+export function applyTheme(id: string, look: Look = currentLook): Theme {
   const palette = PALETTES.find((p) => p.id === id) ?? PALETTES[0];
-  current = buildTheme(palette);
+  currentPaletteId = palette.id;
+  currentLook = look;
+  current =
+    look === 'animated'
+      ? buildAnimatedTheme()
+      : look === 'sunset'
+      ? buildSunsetTheme()
+      : look === 'showroom'
+      ? buildShowroomTheme()
+      : look === 'trading'
+      ? buildTradingTheme()
+      : { ...buildTheme(palette), look: 'normal' };
   const root = document.documentElement;
   for (const name of appliedVars) root.style.removeProperty(name);
   for (const [name, value] of Object.entries(current.vars)) root.style.setProperty(name, value);
   appliedVars = Object.keys(current.vars);
   root.dataset.theme = current.id;
+  root.dataset.look = look;
   root.style.colorScheme = current.isLight ? 'light' : 'dark';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', current.chrome);
   try {
-    localStorage.setItem(STORAGE_KEY, current.id);
+    localStorage.setItem(STORAGE_KEY, currentPaletteId);
+    localStorage.setItem(LOOK_KEY, look);
   } catch {}
   return current;
 }
+
+/** Switch between the normal look and the Animated look, keeping the chosen colour palette. */
+export const applyLook = (look: Look) => applyTheme(currentPaletteId, look);

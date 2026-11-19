@@ -83,6 +83,7 @@ export async function exportTrackToPNG(
     closeLoop,
     pathSegments: segments,
     drawnPath: drawnPath || [],
+    solidBackground: true,
   });
 
   // Footer: Telemetry Metrics & Legend

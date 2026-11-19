@@ -9,6 +9,8 @@ import {
 import { drawWatermarkText } from './watermark';
 import { getManeuverBadgeLayout } from './trackMath';
 import { fieldColors, rgba } from '../theme/engine';
+import { drawDockPlanks, drawDockSurroundings } from './dockArt';
+import { COASTAL_SUNSET } from '../theme/coastalSunset';
 
 export interface ViewportTransform {
   scale: number; // pixels per meter
@@ -43,6 +45,8 @@ export interface RenderOptions {
   hoveredGateRotateHandleId?: string | null;
   placingEquipId?: string | null;
   placementYaw?: number;
+  /** Fill the area around the field (image exports); the live view lets the page show through */
+  solidBackground?: boolean;
 }
 
 export function drawFieldScene(options: RenderOptions) {
@@ -77,11 +81,22 @@ export function drawFieldScene(options: RenderOptions) {
 
   // Colours of the active theme (src/theme/engine.ts)
   const fc = fieldColors();
+  const dock = fc.style === 'dock'; // Animated look: wooden dock on water
+  const coast = fc.style === 'coast';
 
   // Clear background
   ctx.save();
-  ctx.fillStyle = fc.outside; // background outside the field
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  if (dock || coast) {
+    // Water is drawn by the page behind the canvas (animated with CSS); exports fill it in
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    if (options.solidBackground) {
+      ctx.fillStyle = fc.outside;
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    }
+  } else {
+    ctx.fillStyle = fc.outside; // background outside the field
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  }
 
   // Set world coordinate transform: screen = offset + world * scale
   ctx.translate(offsetX, offsetY);
@@ -92,12 +107,29 @@ export function drawFieldScene(options: RenderOptions) {
   const fieldH = FIELD_HEIGHT_M;
 
   // Field Grass / Turf Surface (Dark modern high-tech field surface)
-  ctx.fillStyle = fc.turf;
-  ctx.fillRect(0, 0, fieldW, fieldH);
+  if (dock) {
+    drawDockSurroundings(ctx, fieldW, fieldH, fc.woodDark ?? fc.border);
+    drawDockPlanks(ctx, fieldW, fieldH);
+  } else if (coast) {
+    ctx.fillStyle = 'rgba(12, 15, 42, .48)';
+    ctx.fillRect(0.7, 0.8, fieldW, fieldH);
+    const tarmac = ctx.createLinearGradient(0, 0, fieldW, fieldH);
+    tarmac.addColorStop(0, COASTAL_SUNSET.scene.tarmac[0]);
+    tarmac.addColorStop(0.55, COASTAL_SUNSET.scene.tarmac[1]);
+    tarmac.addColorStop(1, COASTAL_SUNSET.scene.tarmac[2]);
+    ctx.fillStyle = tarmac;
+    ctx.fillRect(0, 0, fieldW, fieldH);
+    ctx.strokeStyle = 'rgba(255, 166, 177, .38)';
+    ctx.lineWidth = 0.25;
+    ctx.strokeRect(0.2, 0.2, fieldW - 0.4, fieldH - 0.4);
+  } else {
+    ctx.fillStyle = fc.turf;
+    ctx.fillRect(0, 0, fieldW, fieldH);
+  }
 
   // Field border outer
   ctx.strokeStyle = fc.border;
-  ctx.lineWidth = 0.15;
+  ctx.lineWidth = dock || coast ? 0.3 : 0.15;
   ctx.strokeRect(0, 0, fieldW, fieldH);
 
   // 2. Draw 1-Meter Grid Lines
@@ -177,7 +209,7 @@ export function drawFieldScene(options: RenderOptions) {
   ctx.save();
   ctx.setLineDash([0.6, 0.4]);
   ctx.lineWidth = 0.12;
-  ctx.strokeStyle = '#f59e0b'; // amber perimeter fence
+  ctx.strokeStyle = fc.fence ?? '#f59e0b'; // amber perimeter fence (rope colour in the Animated look)
   ctx.strokeRect(fenceInset, fenceInset, innerW, innerH);
   ctx.restore();
 
@@ -1153,7 +1185,7 @@ function drawVerticalDoubleGate(
   // --- GATE 1: GROUND 2m × 2m GATE (0m to 2m) ---
   const g1Passed = tierPasses.has(1);
   const g1Order = tierPasses.get(1);
-  const g1Targeted = item?.targetTier === 'tier1' || item?.targetTier === 'ladder_up';
+  const g1Targeted = item?.targetTier === 'tier1' || item?.targetTier === 'ladder_up' || item?.targetTier === 'cube1_exit';
 
   ctx.save();
   ctx.fillStyle = g1Passed ? 'rgba(16, 185, 129, 0.35)' : 'rgba(88, 28, 135, 0.35)';
@@ -1178,7 +1210,7 @@ function drawVerticalDoubleGate(
   // --- GATE 2: UPPER 2m × 2m GATE (2m to 4m) ---
   const g2Passed = tierPasses.has(2);
   const g2Order = tierPasses.get(2);
-  const g2Targeted = item?.targetTier === 'tier2' || item?.targetTier === 'ladder_down';
+  const g2Targeted = item?.targetTier === 'tier2' || item?.targetTier === 'ladder_down' || item?.targetTier === 'cube2_dive';
 
   ctx.save();
   ctx.translate(elevX, elevY);

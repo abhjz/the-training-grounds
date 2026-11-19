@@ -99,6 +99,163 @@ export function smoothPathPoints(points: TrackPoint[], passes: number = 1): Trac
 }
 
 // Generate an aerodynamic curve through ordered gates, including smooth orbit loops around flag poles and dive loops
+// ---------------------------------------------------------------------------
+// Gate tiers and flight maneuvers → real flight points
+// ---------------------------------------------------------------------------
+const MAX_ALT = 8;
+const clampZ = (z: number) => Math.max(0.3, Math.min(MAX_ALT, z));
+const clampFX = (x: number) => Math.max(0, Math.min(FIELD_WIDTH_M, x));
+const clampFY = (y: number) => Math.max(0, Math.min(FIELD_HEIGHT_M, y));
+
+/** Number of stacked openings in a piece. */
+function tierCountOf(visualType: string | undefined): number {
+  switch (visualType) {
+    case 'vertical_double':
+    case 'double_cube':
+      return 2;
+    case 'vertical_triple':
+      return 3;
+    case 'vertical_quad':
+      return 4;
+    default:
+      return 1;
+  }
+}
+/** Height of one opening in metres. */
+function tierHeightFor(item: PlacedItem): number {
+  const eq = EQUIPMENT_MAP.get(item.equipId);
+  if (eq?.tierHeight) return eq.tierHeight;
+  switch (eq?.visualType) {
+    case 'single_gate_blue':
+    case 'single_gate_lightblue':
+      return 1.5;
+    case 'cube_gate':
+    case 'double_cube':
+      return eq.width;
+    default:
+      return 2;
+  }
+}
+/** Which opening (0 = bottom) a tier setting points at, or null for the default pass. */
+function tierIndexOf(t: PlacedItem['targetTier'], count: number): number | null {
+  if (t === 'tier1' || t === 1 || t === 'cube1_exit') return 0;
+  if (t === 'tier2' || t === 2 || t === 'cube2_dive') return Math.min(1, count - 1);
+  if (t === 'tier3' || t === 3) return Math.min(2, count - 1);
+  if (t === 'tier4' || t === 4) return Math.min(3, count - 1);
+  return null;
+}
+
+/**
+ * The flight points through one gate, in flying order, honouring its target tier and its entry /
+ * exit maneuver. `reverse` builds them for a line that crosses the gate the other way.
+ */
+export function gateManeuverPoints(item: PlacedItem, reverse = false): TrackPoint[] {
+  const eq = EQUIPMENT_MAP.get(item.equipId);
+  const rad = ((item.rotation + (reverse ? 180 : 0)) * Math.PI) / 180;
+  const fx = -Math.sin(rad);
+  const fy = Math.cos(rad);
+  const rx = -fy; // the pilot's right
+  const ry = fx;
+  const P = (along: number, side: number, z: number): TrackPoint => ({
+    x: Number(clampFX(item.x + fx * along + rx * side).toFixed(2)),
+    y: Number(clampFY(item.y + fy * along + ry * side).toFixed(2)),
+    z: Number(clampZ(z).toFixed(2)),
+  });
+
+  const tiers = tierCountOf(eq?.visualType);
+  const th = tierHeightFor(item);
+  const top = th * tiers;
+  const tierZ = (i: number) => th * (i + 0.5);
+  const tierIdx = tierIndexOf(item.targetTier, tiers);
+  const z = tierIdx !== null ? tierZ(tierIdx) : Math.min(1.2, top - 0.3);
+  const pitchRad = (((item.pitch ?? 0) * (reverse ? -1 : 1)) * Math.PI) / 180;
+  const dz = Math.sin(pitchRad) * 0.8;
+  const m = item.maneuver ?? 'straight';
+
+  // Ladders: several passes through the stacked openings, turning round between them
+  const ladderTier = item.targetTier === 'ladder_up' || item.targetTier === 'ladder_down';
+  const ladderMan = m.startsWith('ladder_');
+  if ((ladderTier || ladderMan) && tiers > 1) {
+    const up = ladderMan ? m.startsWith('ladder_up') : item.targetTier === 'ladder_up';
+    const side = m.endsWith('_left') ? -1.6 : 1.6;
+    const order = Array.from({ length: tiers }, (_, i) => (up ? i : tiers - 1 - i));
+    const out: TrackPoint[] = [];
+    order.forEach((ti, j) => {
+      const d = j % 2 === 0 ? 1 : -1; // alternate direction each pass
+      const zz = tierZ(ti);
+      out.push(P(-0.9 * d, 0, zz), P(0, 0, zz), P(0.9 * d, 0, zz));
+      if (j < order.length - 1) out.push(P(3.2 * d, side * (j % 2 === 0 ? 1 : -1), (zz + tierZ(order[j + 1])) / 2));
+    });
+    return out;
+  }
+
+  // Double cube default: dive in through the top, out through the bottom
+  if (eq?.visualType === 'double_cube' && tierIdx === null && m === 'straight') {
+    return [P(-1.8, 0, top + 0.8), P(0, 0, top), P(0.2, 0, th), P(1.5, 0, 0.8)];
+  }
+  if (eq?.visualType === 'double_cube' && item.targetTier === 'cube2_dive' && m === 'straight') {
+    return [P(-2.2, 0, top + 1.2), P(-0.6, 0, top + 0.2), P(0, 0, tierZ(1)), P(1.5, 0, tierZ(1))];
+  }
+
+  const pass = [P(-0.8, 0, z - dz), P(0, 0, z), P(0.8, 0, z + dz)];
+  switch (m) {
+    case 'enter_corkscrew_right':
+    case 'corkscrew_left': {
+      // One full roll around the flight axis on the way in
+      const dir = m === 'corkscrew_left' ? -1 : 1;
+      const r = 1.2;
+      const helix: TrackPoint[] = [];
+      for (let s = 0; s <= 8; s++) {
+        const a = (s / 8) * Math.PI * 2;
+        helix.push(P(-6 + (s / 8) * 4.8, dir * r * Math.sin(a), z + r * (1 - Math.cos(a))));
+      }
+      return [...helix, P(0, 0, z), P(0.8, 0, z + dz)];
+    }
+    case 'slalom_left':
+    case 'slalom_right': {
+      const s = m === 'slalom_left' ? -1 : 1; // side the line weaves out to after the gate
+      return [P(-3.2, -1.7 * s, z), P(-1.2, -0.6 * s, z), P(0, 0, z), P(1.2, 0.6 * s, z), P(3.2, 1.7 * s, z)];
+    }
+    case 'dive_in':
+      return [P(-4.2, 0, z + 2.6), P(-1.6, 0, z + 0.9), P(0, 0, z), P(0.8, 0, z)];
+    case 'dive_out':
+      return [P(-0.8, 0, z), P(0, 0, z), P(1.6, 0, z + 0.9), P(4.2, 0, z + 2.6)];
+    case 'orbit_pole_left_exit':
+    case 'orbit_pole_right_exit': {
+      // A full circle beside the approach, then straight through the gate
+      const s = m === 'orbit_pole_left_exit' ? -1 : 1;
+      const R = 2.4;
+      const cAlong = -4.6;
+      const cSide = s * R;
+      // Start on the flight axis, moving forward, and go once round the circle
+      const phi0 = s > 0 ? Math.PI : 0;
+      const ring: TrackPoint[] = [];
+      for (let k = 0; k <= 8; k++) {
+        const phi = phi0 - s * (k / 8) * Math.PI * 2;
+        ring.push(P(cAlong + Math.sin(phi) * R, cSide + Math.cos(phi) * R, z));
+      }
+      return [P(-8, 0, z), ...ring, ...pass];
+    }
+    case 'split_s':
+      // Over the top of the gate, half loop down, back through it the other way
+      return [P(-3, 0, top + 1.4), P(0, 0, top + 1.4), P(2.2, 0, top + 1.1), P(3.1, 0, (top + z) / 2 + 0.5), P(2.2, 0, z + 0.3), P(0.8, 0, z), P(0, 0, z), P(-0.8, 0, z), P(-2.6, 0, z)];
+    case 'reverse_split_s':
+      // Through the gate, half loop up, back over the top the other way
+      return [P(-2.6, 0, z), P(-0.8, 0, z), P(0, 0, z), P(0.8, 0, z), P(2.2, 0, z + 0.3), P(3.1, 0, (top + z) / 2 + 0.5), P(2.2, 0, top + 1.1), P(0, 0, top + 1.4), P(-3, 0, top + 1.4)];
+    case 'ladder_up_left':
+    case 'ladder_up_right':
+    case 'ladder_down_left':
+    case 'ladder_down_right': {
+      // Single opening: climb out (up) or drop in (down), turning to the chosen side
+      const s = m.endsWith('_left') ? -1 : 1;
+      if (m.startsWith('ladder_up')) return [P(-0.8, 0, z), P(0, 0, z), P(1.8, 1.0 * s, z + 1.0), P(3.4, 2.4 * s, z + 2.4)];
+      return [P(-3.4, -2.4 * s, z + 2.4), P(-1.8, -1.0 * s, z + 1.0), P(0, 0, z), P(0.8, 0, z)];
+    }
+    default:
+      return pass;
+  }
+}
+
 export function generateCurvedPathFromGates(
   items: PlacedItem[],
   closeLoop: boolean
@@ -143,65 +300,9 @@ export function generateCurvedPathFromGates(
         y: current.y + Math.sin(departAngle + Math.PI / 2) * orbitR,
         z: 1.5,
       });
-    } else if (equip?.visualType === 'double_cube') {
-      // 4m Vertical Double Cube Gate: Power loop / vertical dive!
-      // Drones approach at high altitude (4.5m), dive down into top ring (4m), plunge to 1m, exit forward
-      const rad = (current.rotation * Math.PI) / 180;
-      const forwardX = -Math.sin(rad);
-      const forwardY = Math.cos(rad);
-
-      // Approach high above gate entry
-      rawKeyPoints.push({
-        x: current.x - forwardX * 1.8,
-        y: current.y - forwardY * 1.8,
-        z: 4.8,
-      });
-      // Center of top dive portal (at 4.0m elevation)
-      rawKeyPoints.push({
-        x: current.x,
-        y: current.y,
-        z: 4.0,
-      });
-      // Mid dive inside the vertical shaft
-      rawKeyPoints.push({
-        x: current.x + forwardX * 0.2,
-        y: current.y + forwardY * 0.2,
-        z: 2.0,
-      });
-      // Pull out through bottom ground exit archway
-      rawKeyPoints.push({
-        x: current.x + forwardX * 1.5,
-        y: current.y + forwardY * 1.5,
-        z: 0.8,
-      });
     } else {
-      // Gate entry and exit points aligned with yaw and pitch angles
-      const rad = (current.rotation * Math.PI) / 180;
-      const forwardX = -Math.sin(rad);
-      const forwardY = Math.cos(rad);
-
-      // Pitch tilts the gate trajectory up or down in Z (altitude)
-      const pitchDeg = current.pitch ?? 0;
-      const pitchRad = (pitchDeg * Math.PI) / 180;
-      const dz = Math.sin(pitchRad) * 0.8;
-      const baseZ = 1.2;
-
-      // Add point slightly before and after gate center for clean forward entry/exit matching pitch slope
-      rawKeyPoints.push({
-        x: current.x - forwardX * 0.8,
-        y: current.y - forwardY * 0.8,
-        z: Math.max(0.3, Math.min(5.0, baseZ - dz)),
-      });
-      rawKeyPoints.push({
-        x: current.x,
-        y: current.y,
-        z: baseZ,
-      });
-      rawKeyPoints.push({
-        x: current.x + forwardX * 0.8,
-        y: current.y + forwardY * 0.8,
-        z: Math.max(0.3, Math.min(5.0, baseZ + dz)),
-      });
+      // Gates: entry, pass and exit through the target tier, shaped by the chosen maneuver
+      rawKeyPoints.push(...gateManeuverPoints(current));
     }
   }
 

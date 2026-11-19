@@ -1,4 +1,5 @@
-// The nine 60·30·10 palettes (base / support / accent), plus the app's original look.
+// The 60·30·10 palettes (base / support / accent), plus the app's original look.
+import { COASTAL_SUNSET } from './coastalSunset';
 // 60% base → backgrounds and panels · 30% support → text and main content · 10% accent → active
 // buttons, highlights and the race line.
 
@@ -24,4 +25,5 @@ export const PALETTES: Palette[] = [
   { id: 'mauve-loud', name: 'Mauve Loud', mood: 'Warm, playful', base: '#913768', support: '#C29A74', accent: '#FDD001' },
   { id: 'olive-standout', name: 'Olive Standout', mood: 'Warm, earthy', base: '#778A3F', support: '#6E4B2C', accent: '#F16619' },
   { id: 'brick-hook', name: 'Brick Hook', mood: 'Warm, confident', base: '#C15B46', support: '#ABA6A3', accent: '#45DBE1' },
+  COASTAL_SUNSET.palette,
 ];
