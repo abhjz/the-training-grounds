@@ -45,4 +45,4 @@ body:
     id: extra
     attributes:
       label: Screenshot, recording or track file
-      description: Drag files here. If it happens on one track only, attach its .tgtrack file.
+      description: Drag files here. If it happens on one track only, attach its track file (Save & Export Track → Track JSON File).

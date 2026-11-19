@@ -4,7 +4,7 @@ Thanks for helping make a better track designer for FPV pilots.
 
 ## Reporting a bug or asking for a feature
 
-[Open an issue](https://github.com/abhjz/the-training-grounds/issues/new/choose) and pick a template. For bugs, the device, the app version and a screenshot or short recording are the most useful things you can send. If the problem only happens on one track, attach its `.tgtrack` file.
+[Open an issue](https://github.com/abhjz/the-training-grounds/issues/new/choose) and pick a template. For bugs, the device, the app version and a screenshot or short recording are the most useful things you can send. If the problem only happens on one track, attach its track JSON file (Save & Export Track → Track JSON File).
 
 ## Working on the code
 
