@@ -13,6 +13,20 @@
   }
 }
 
+/* Full screen map: everything but the map (2D canvas or 3D scene) and the Full screen button is hidden */
+.tg-fullmap #inventory-sidebar,
+.tg-fullmap main > :not(canvas):not(.tg-map3d):not(.tg-fullmap-btn),
+.tg-fullmap .tg-field3d > :not(:first-child) {
+  display: none !important;
+}
+
+/* Sidebar hidden for a full-screen field: only on computer screens (phones use the drawer) */
+@media (min-width: 1024px) and (min-height: 521px) {
+  .tg-desktop-hidden {
+    display: none !important;
+  }
+}
+
 /* Keep the app clear of the status bar, notch and gesture bar.
    Capacitor injects --safe-area-inset-*; browsers provide env(). */
 #app-shell {

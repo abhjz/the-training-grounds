@@ -5,6 +5,7 @@
 // lighter/darker until it is readable, so palettes with mid-tone bases stay usable.
 
 import { DEFAULT_THEME_ID, PALETTES, Palette } from './palettes';
+import { DESERT } from './desert';
 import { TW } from './tailwindColors';
 import { COASTAL_SUNSET } from './coastalSunset';
 import { SHOWROOM } from './showroom';
@@ -73,7 +74,7 @@ export interface FieldColors {
   hemiSky: string;
   hemiGround: string;
   /** Scene treatment for 2D and 3D fields. */
-  style?: 'flat' | 'dock' | 'coast' | 'showroom' | 'trading';
+  style?: 'flat' | 'dock' | 'coast' | 'showroom' | 'trading' | 'desert';
   /** Animated look only */
   water?: string;
   waterDeep?: string;
@@ -82,7 +83,7 @@ export interface FieldColors {
   fence?: string;
 }
 
-export type Look = 'normal' | 'animated' | 'sunset' | 'showroom' | 'trading';
+export type Look = 'normal' | 'animated' | 'sunset' | 'showroom' | 'trading' | 'desert';
 
 export interface Theme {
   id: string;
@@ -347,6 +348,13 @@ function buildTradingTheme(): Theme {
   return { ...t, id: look.id, name: look.name, isLight: false, look: 'trading', field: { ...t.field, ...field }, chrome: ui.canvas };
 }
 
+/** Desert Site look: sand, scrub and turf colours of a real desert flying site (src/theme/desert.ts). */
+function buildDesertTheme(): Theme {
+  const { palette, field, look } = DESERT;
+  const t = buildTheme(palette);
+  return { ...t, id: look.id, name: look.name, isLight: false, look: 'desert', field: { ...t.field, ...field }, chrome: '#2A241C' };
+}
+
 // ---------------------------------------------------------------- current theme
 const STORAGE_KEY = 'training_grounds_theme';
 const LOOK_KEY = 'training_grounds_look';
@@ -356,7 +364,9 @@ let currentPaletteId = DEFAULT_THEME_ID;
 export function loadLook(): Look {
   try {
     const saved = localStorage.getItem(LOOK_KEY);
-    if (saved === 'animated' || saved === 'sunset' || saved === 'showroom' || saved === 'trading') return saved;
+    if (saved === 'animated' || saved === 'sunset' || saved === 'showroom' || saved === 'trading' || saved === 'desert') return saved;
+    // First open: the Desert Site look, to match the Main UAE FPV ground the app opens on
+    if (saved === null) return 'desert';
   } catch {}
   return 'normal';
 }
@@ -390,6 +400,8 @@ export function applyTheme(id: string, look: Look = currentLook): Theme {
       ? buildShowroomTheme()
       : look === 'trading'
       ? buildTradingTheme()
+      : look === 'desert'
+      ? buildDesertTheme()
       : { ...buildTheme(palette), look: 'normal' };
   const root = document.documentElement;
   for (const name of appliedVars) root.style.removeProperty(name);

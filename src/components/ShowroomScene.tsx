@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M, PERIMETER_FENCE_M } from '../constants/equipment';
 import { FieldColors } from '../theme/engine';
 import { SHOWROOM } from '../theme/showroom';
-import { drawWatermarkText } from '../utils/watermark';
+import { drawWatermarkText, GroundMarkSource, hasGroundMark } from '../utils/watermark';
 import { useMediaMatch } from '../hooks/useMediaMatch';
 
 const noPick = () => {};
@@ -25,7 +25,7 @@ function NoPick({ children }: { children: React.ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
-function useWatermark(name: string) {
+function useWatermark(name: GroundMarkSource) {
   return useMemo(() => {
     const pxPerM = 24;
     const w = Math.round(FIELD_WIDTH_M * pxPerM);
@@ -34,14 +34,14 @@ function useWatermark(name: string) {
     c.width = w;
     c.height = h;
     const ctx = c.getContext('2d');
-    if (ctx && name.trim()) drawWatermarkText(ctx, name, w, h, 'rgba(255, 255, 255, 0.07)');
+    if (ctx && hasGroundMark(name)) drawWatermarkText(ctx, name, w, h, 'rgba(255, 255, 255, 0.07)');
     const t = new THREE.CanvasTexture(c);
     t.anisotropy = 4;
     return t;
   }, [name]);
 }
 
-export function ShowroomField({ groundName, fc }: { groundName: string; fc: FieldColors }) {
+export function ShowroomField({ groundName, fc }: { groundName: GroundMarkSource; fc: FieldColors }) {
   const compact = useMediaMatch('(max-width: 767px)');
   const watermark = useWatermark(groundName);
   useEffect(() => () => watermark.dispose(), [watermark]);

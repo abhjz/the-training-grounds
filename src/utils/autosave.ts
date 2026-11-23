@@ -1,4 +1,4 @@
-import { PlacedItem, TrackPoint } from '../types';
+import { GroundMark, parseGroundMark, PlacedItem, TrackPoint } from '../types';
 
 // Autosave of the current working layout, so a refresh or closed tab doesn't lose work.
 // Separate from the named tracks the user saves through the Save/Load modal.
@@ -17,6 +17,7 @@ export interface AutosaveState {
   snapGrid: number;
   showDistances: boolean;
   drawnPathColor: string;
+  groundMark?: GroundMark;
 }
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -53,6 +54,7 @@ export function loadAutosave(groundId = 'default'): AutosaveState | null {
       snapGrid: isFiniteNumber(d.snapGrid) ? d.snapGrid : 0.5,
       showDistances: typeof d.showDistances === 'boolean' ? d.showDistances : true,
       drawnPathColor: typeof d.drawnPathColor === 'string' ? d.drawnPathColor : '#ef4444',
+      groundMark: parseGroundMark(d.groundMark),
     };
   } catch {
     return null;

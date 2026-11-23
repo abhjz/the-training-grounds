@@ -10,7 +10,8 @@ import * as THREE from 'three';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M, PERIMETER_FENCE_M } from '../constants/equipment';
 import { FieldColors } from '../theme/engine';
 import { drawDockPlanks } from '../utils/dockArt';
-import { drawWatermarkText } from '../utils/watermark';
+import { drawWatermarkText, GroundMarkSource, hasGroundMark } from '../utils/watermark';
+import { useSceneryMotion } from '../hooks/useSceneryMotion';
 
 // ---------------------------------------------------------------- shared
 const DECK_THICK = 0.35;
@@ -22,8 +23,6 @@ const rand = (n: number) => {
   const x = Math.sin(n * 91.7 + 17.3) * 43758.5453;
   return x - Math.floor(x);
 };
-const reducedMotion = () =>
-  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const noRaycast = () => {};
 
 /** Decoration never takes clicks, so clicking "empty" water still deselects. */
@@ -46,7 +45,7 @@ function makeCanvas(w: number, h: number) {
 }
 
 /** The deck: wooden planks overgrown with moss and algae near the edges, barnacles in the cracks. */
-function useDeckTexture(groundName: string) {
+function useDeckTexture(groundName: GroundMarkSource) {
   return useMemo(() => {
     const pxPerM = 28;
     const w = Math.round(FIELD_WIDTH_M * pxPerM);
@@ -81,7 +80,7 @@ function useDeckTexture(groundName: string) {
       ctx.fill();
     }
     ctx.restore();
-    if (groundName.trim()) drawWatermarkText(ctx, groundName, w, h, 'rgba(220, 255, 245, 0.12)');
+    if (hasGroundMark(groundName)) drawWatermarkText(ctx, groundName, w, h, 'rgba(220, 255, 245, 0.12)');
     const tex = new THREE.CanvasTexture(canvas);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 8;
@@ -135,7 +134,7 @@ function makeFacade(seed: number) {
 }
 
 // ---------------------------------------------------------------- the deck (exported)
-export function SunkenDeck({ groundName, fc }: { groundName: string; fc: FieldColors }) {
+export function SunkenDeck({ groundName, fc }: { groundName: GroundMarkSource; fc: FieldColors }) {
   const deck = useDeckTexture(groundName);
   const gridGeom = useMemo(() => {
     const pts: number[] = [];
@@ -201,7 +200,7 @@ function SkyDome({ scale }: { scale: number }) {
 
 /** The sea surface seen from below: bright, rippling, fading toward the distance. */
 function Surface({ y, scale }: { y: number; scale: number }) {
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -234,7 +233,7 @@ function Surface({ y, scale }: { y: number; scale: number }) {
 
 /** Shafts of sunlight slanting down from the surface, slowly breathing. */
 function LightRays({ top, scale }: { top: number; scale: number }) {
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   const mats = useRef<THREE.ShaderMaterial[]>([]);
   const rays = useMemo(
     () =>
@@ -289,7 +288,7 @@ function LightRays({ top, scale }: { top: number; scale: number }) {
 
 /** Rippling patterns of light on the deck (additive overlay, not exported). */
 function Caustics() {
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   const mat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -459,7 +458,7 @@ function Kelp({ position, height, phase }: { position: [number, number, number];
   const segs = 7;
   const segH = height / segs;
   const refs = useRef<(THREE.Group | null)[]>([]);
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   useFrame(({ clock }) => {
     if (still) return;
     const t = clock.elapsedTime;
@@ -577,7 +576,7 @@ function FishSchools({ scale }: { scale: number }) {
     return g;
   }, []);
   const dummy = useMemo(() => new THREE.Object3D(), []);
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   const place = (t: number) => {
     schools.forEach((s, si) => {
       const mesh = refs.current[si];
@@ -624,7 +623,7 @@ function Jellyfish({ scale }: { scale: number }) {
     [scale]
   );
   const refs = useRef<(THREE.Group | null)[]>([]);
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   useFrame(({ clock }) => {
     if (still) return;
     const t = clock.elapsedTime;
@@ -698,7 +697,7 @@ function Bubbles({ scale, top }: { scale: number; top: number }) {
     g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     return { geo: g, speeds: sp, bottom: bot };
   }, [scale, top]);
-  const still = reducedMotion();
+  const still = !useSceneryMotion();
   useFrame(({ clock }, dt) => {
     if (still) return;
     const attr = geo.getAttribute('position') as THREE.BufferAttribute;

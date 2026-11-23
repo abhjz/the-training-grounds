@@ -2,7 +2,7 @@
   "id": "/",
   "name": "The Training Grounds - FPV Track Designer",
   "short_name": "FPV Track",
-  "description": "Design FPV drone racing tracks: place real gates on a to-scale field, draw the race line, see distances and lap times, and fly it in 3D. Five looks, works offline.",
+  "description": "Design FPV drone racing tracks and model your flying site: real gates and scenery on a to-scale field, the race line, lap times, five 3D fly-through views and lap video export. Six looks, works offline.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

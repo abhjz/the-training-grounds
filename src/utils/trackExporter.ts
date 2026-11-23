@@ -1,4 +1,4 @@
-import { PlacedItem, SavedTrack, TrackGround, TrackMetrics, TrackPoint } from '../types';
+import { GroundMark, parseGroundMark, PlacedItem, SavedTrack, TrackGround, TrackMetrics, TrackPoint } from '../types';
 import {
   ACTIVE_GROUND_NAME,
   EQUIPMENT_MAP,
@@ -141,7 +141,8 @@ export async function exportTrackToJSON(
   closeLoop: boolean,
   droneSpeedKmH: number,
   drawnPath?: TrackPoint[],
-  ground?: TrackGround
+  ground?: TrackGround,
+  groundMark?: GroundMark
 ): Promise<void> {
   const data: SavedTrack = {
     id: `track-${Date.now()}`,
@@ -152,6 +153,7 @@ export async function exportTrackToJSON(
     droneSpeedKmH,
     drawnPath: drawnPath && drawnPath.length > 0 ? drawnPath : undefined,
     ground,
+    groundMark,
   };
 
   const jsonStr = JSON.stringify(data, null, 2);
@@ -184,6 +186,7 @@ export function parseTrackText(text: string, fileName = 'track.json'): SavedTrac
     droneSpeedKmH: data.droneSpeedKmH ?? 85,
     drawnPath: Array.isArray(data.drawnPath) ? data.drawnPath : undefined,
     ground: parseGround(data.ground),
+    groundMark: data.groundMark ? parseGroundMark(data.groundMark) : undefined,
   };
 }
 

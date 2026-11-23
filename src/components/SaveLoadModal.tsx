@@ -13,7 +13,7 @@ import {
   X,
   Check,
 } from 'lucide-react';
-import { PlacedItem, SavedTrack, TrackGround, TrackPoint } from '../types';
+import { PlacedItem, SavedTrack, TrackGround, TrackPoint, GroundMark } from '../types';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M } from '../constants/equipment';
 import {
   deleteTrackFromLocalStorage,
@@ -34,6 +34,8 @@ interface SaveLoadModalProps {
   drawnPath?: TrackPoint[];
   /** The field the current layout is on; saved with the track */
   ground: TrackGround;
+  /** What's painted on the ground; saved with the track */
+  groundMark?: GroundMark;
   onLoadTrack: (track: SavedTrack) => void;
   onExport3D: (kind: 'glb' | 'png', trackName: string) => void;
   export3DStatus: { state: 'working' | 'done' | 'error'; message: string } | null;
@@ -47,6 +49,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   droneSpeedKmH,
   drawnPath,
   ground,
+  groundMark,
   onLoadTrack,
   onExport3D,
   export3DStatus,
@@ -55,6 +58,9 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
   const [storedTracks, setStoredTracks] = React.useState<SavedTrack[]>([]);
   const [savedSuccessMessage, setSavedSuccessMessage] = React.useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  // Deleting a saved track is permanent, so it waits for the word DELETE to be typed
+  const [pendingDelete, setPendingDelete] = React.useState<SavedTrack | null>(null);
+  const [deleteWord, setDeleteWord] = React.useState('');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -78,6 +84,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
       droneSpeedKmH,
       drawnPath: drawnPath && drawnPath.length > 0 ? drawnPath : undefined,
       ground: { name: ground.name, width: ground.width, height: ground.height },
+      groundMark,
     };
     saveTrackToLocalStorage(newTrack);
     setStoredTracks(getStoredTracks());
@@ -85,10 +92,17 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
     setTimeout(() => setSavedSuccessMessage(null), 3000);
   };
 
-  const handleDeleteSlot = (id: string, e: React.MouseEvent) => {
+  const handleDeleteSlot = (track: SavedTrack, e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteTrackFromLocalStorage(id);
+    setDeleteWord('');
+    setPendingDelete(track);
+  };
+  const confirmDelete = () => {
+    if (!pendingDelete || deleteWord !== 'DELETE') return;
+    deleteTrackFromLocalStorage(pendingDelete.id);
     setStoredTracks(getStoredTracks());
+    setPendingDelete(null);
+    setDeleteWord('');
   };
 
   const handleExportPNG = async () => {
@@ -105,7 +119,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
         name: ground.name,
         width: ground.width,
         height: ground.height,
-      });
+      }, groundMark);
     } catch (err: any) {
       alert(`Could not export track file: ${err?.message ?? err}`);
     }
@@ -131,7 +145,7 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
       id="save-load-modal"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
     >
-      <div className="w-full max-w-xl bg-tg-panel border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono text-slate-200 max-h-[90vh]">
+      <div className="relative w-full max-w-xl bg-tg-panel border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-mono text-slate-200 max-h-[90vh]">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900">
           <div className="flex items-center gap-2">
@@ -327,9 +341,10 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
                         Load
                       </span>
                       <button
-                        onClick={(e) => handleDeleteSlot(saved.id, e)}
+                        onClick={(e) => handleDeleteSlot(saved, e)}
                         className="p-1 rounded text-slate-600 hover:text-rose-400 hover:bg-slate-700 transition"
                         title="Delete saved track"
+                        aria-label={`Delete saved track ${saved.name}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -350,6 +365,55 @@ export const SaveLoadModal: React.FC<SaveLoadModalProps> = ({
             Close
           </button>
         </div>
+        {/* Confirm deleting a saved track: type DELETE */}
+        {pendingDelete && (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 p-4 rounded-2xl"
+            onClick={() => setPendingDelete(null)}
+          >
+            <form
+              role="alertdialog"
+              aria-label="Confirm delete"
+              className="w-full max-w-sm rounded-xl border border-rose-500/50 bg-slate-950 p-4 font-mono text-xs text-slate-300 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+              onSubmit={(e) => {
+                e.preventDefault();
+                confirmDelete();
+              }}
+              onKeyDown={(e) => e.key === 'Escape' && (e.stopPropagation(), setPendingDelete(null))}
+            >
+              <h3 className="flex items-center gap-2 text-sm font-bold text-rose-300 mb-2">
+                <Trash2 className="w-4 h-4" /> Delete "{pendingDelete.name}"?
+              </h3>
+              <p className="mb-3 text-slate-400">
+                This removes the saved track from this device for good. It can't be undone. Type <b className="text-rose-300">DELETE</b> to confirm.
+              </p>
+              <input
+                autoFocus
+                value={deleteWord}
+                onChange={(e) => setDeleteWord(e.target.value)}
+                placeholder="DELETE"
+                aria-label="Type DELETE to confirm"
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck={false}
+                className="w-full mb-3 bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-100 tracking-widest focus:outline-hidden focus:border-rose-400"
+              />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setPendingDelete(null)} className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={deleteWord !== 'DELETE'}
+                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Delete track
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

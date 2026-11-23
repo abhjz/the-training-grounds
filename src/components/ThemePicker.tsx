@@ -43,6 +43,28 @@ const ThemePreview: React.FC<{ palette: Palette }> = ({ palette }) => {
   );
 };
 
+/** Preview of the Desert Site look: hazy sky, sand with olive scrub, a green turf pitch and the race line. */
+const DesertPreview: React.FC = () => (
+  <div className="h-20 rounded-lg overflow-hidden border border-slate-700 relative" aria-hidden>
+    <svg viewBox="0 0 100 60" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="tgDesertSky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#AFC0CC" />
+          <stop offset="1" stopColor="#C9CFD2" />
+        </linearGradient>
+      </defs>
+      <rect width="100" height="22" fill="url(#tgDesertSky)" />
+      <rect y="22" width="100" height="38" fill="#B3A58E" />
+      {[[8, 28], [18, 34], [30, 27], [72, 30], [88, 36], [94, 26], [12, 50], [86, 52], [60, 26], [40, 54]].map(([x, y], i) => (
+        <circle key={i} cx={x} cy={y} r={i % 3 ? 1.6 : 2.4} fill="#4A4A33" />
+      ))}
+      <rect x="30" y="34" width="40" height="18" fill="#2E7D1F" stroke="#1F5F2A" strokeWidth="0.8" />
+      <path d="M36 46 C 36 38, 50 37, 56 40 S 66 47, 60 49 S 40 51, 36 46 Z" fill="none" stroke="#1D6FE0" strokeWidth="1.6" />
+      <rect x="74" y="36" width="10" height="7" fill="#E8E6E1" />
+    </svg>
+  </div>
+);
+
 /** Preview of the Animated look: deep teal water, drowned towers, a mossy deck and an amber race line. */
 const AnimatedPreview: React.FC = () => (
   <div className="tg-anim-preview h-20 rounded-lg overflow-hidden border border-slate-700 relative" aria-hidden>
@@ -158,6 +180,7 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({ isOpen, activeId, look
           <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2">Look</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {([
+              { id: 'desert' as Look, name: 'Desert Site', mood: 'The default. Real desert colours: sand, olive scrub, turf green and a hazy morning sky.', icon: Square },
               { id: 'normal' as Look, name: 'Normal look', mood: 'Flat, technical. Uses the colour theme below.', icon: Square },
               { id: 'animated' as Look, name: 'Animated look', mood: 'Sunken city: a mossy deck on a drowned tower, light rays, fish and bubbles in 3D.', icon: Sparkles },
               { id: 'sunset' as Look, name: COASTAL_SUNSET.look.name, mood: 'Animated palms, boats, birds and a tropical sunset skyline.', icon: Sparkles },
@@ -176,7 +199,9 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({ isOpen, activeId, look
                   }`}
                   aria-pressed={active}
                 >
-                  {o.id === 'trading' ? (
+                  {o.id === 'desert' ? (
+                    <DesertPreview />
+                  ) : o.id === 'trading' ? (
                     <TradingPreview />
                   ) : o.id === 'showroom' ? (
                     <ShowroomPreview />
@@ -190,6 +215,9 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({ isOpen, activeId, look
                   <div className="mt-2 text-xs font-bold text-slate-100 flex items-center gap-1.5">
                     <Icon className="w-3.5 h-3.5 text-sky-400" />
                     {o.name}
+                    {o.id === 'desert' && (
+                      <span className="px-1 rounded bg-emerald-500/15 text-emerald-300 text-[9px] font-mono uppercase">Default</span>
+                    )}
                     {active && <Check className="w-3.5 h-3.5 text-sky-400" />}
                   </div>
                   <div className="text-[10px] text-slate-400">{o.mood}</div>

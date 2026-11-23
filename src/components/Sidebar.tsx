@@ -17,16 +17,37 @@ import {
   Orbit,
   ChevronDown,
   ChevronUp,
+  MapPinned,
   X,
   Palette,
+  Type,
+  PanelLeftClose,
+  Trees,
+  Check,
 } from 'lucide-react';
 import { EquipmentDef, PlacedItem } from '../types';
-import { EQUIPMENT_INVENTORY } from '../constants/equipment';
+import { EQUIPMENT_INVENTORY, EQUIPMENT_MAP } from '../constants/equipment';
 import { PRESET_TRACKS } from '../constants/presets';
 import { Ground } from '../utils/grounds';
 import { GroundSwitcher } from './GroundSwitcher';
 import { EquipmentCreator } from './EquipmentCreator';
 import { CustomEquipmentInput } from '../utils/customEquipment';
+
+/** Groups in the Environment Assets list, in display order. */
+const EXTRA_GROUP_ORDER = ['Trees & grass', 'Ground & track', 'Buildings & shelters', 'Poles & flags', 'Obstacles & props'];
+/** Order inside a group (types not listed keep their inventory order, after these). */
+const EXTRA_TYPE_ORDER = ['tree_big', 'tree_small', 'palm', 'grass', 'scrub_patch'];
+const typeRank = (t: string) => {
+  const i = EXTRA_TYPE_ORDER.indexOf(t);
+  return i < 0 ? EXTRA_TYPE_ORDER.length : i;
+};
+function extraGroupOf(t: string): string {
+  if (['tree_big', 'tree_small', 'palm', 'grass', 'scrub_patch'].includes(t)) return 'Trees & grass';
+  if (['turf_pitch', 'sand_pit', 'asphalt', 'gravel_road', 'dirt_lane', 'dirt_curve', 'dirt_area', 'berm'].includes(t)) return 'Ground & track';
+  if (['building', 'cabin', 'shade_shed', 'open_shelter', 'gazebo'].includes(t)) return 'Buildings & shelters';
+  if (['floodlight', 'light_pole', 'mast', 'flagpole'].includes(t)) return 'Poles & flags';
+  return 'Obstacles & props';
+}
 
 interface SidebarProps {
   onCreateEquipment: (input: CustomEquipmentInput) => void;
@@ -63,6 +84,12 @@ interface SidebarProps {
   /** Colour theme */
   themeName?: string;
   onOpenThemePicker?: () => void;
+  /** What's painted on the ground now, for the button label */
+  groundMarkLabel?: string;
+  onOpenGroundMark?: () => void;
+  /** Computer screens: the sidebar is hidden so the field fills the window */
+  desktopHidden?: boolean;
+  onHideDesktop?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -95,14 +122,59 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
   themeName,
   onOpenThemePicker,
+  groundMarkLabel,
+  onOpenGroundMark,
+  desktopHidden,
+  onHideDesktop,
 }) => {
   const [confirmClear, setConfirmClear] = React.useState(false);
   const [creatingEquipment, setCreatingEquipment] = React.useState(false);
+  // Two lists behind the inventory heading: racing assets, and environment assets (site & scenery)
+  const [invView, setInvView] = React.useState<'equipment' | 'extra'>(() => {
+    try {
+      return localStorage.getItem('tg.inventoryView') === 'extra' ? 'extra' : 'equipment';
+    } catch {
+      return 'equipment';
+    }
+  });
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('tg.inventoryView', invView);
+    } catch {
+      /* private mode */
+    }
+  }, [invView]);
+  const [invMenuOpen, setInvMenuOpen] = React.useState(false);
+  const invMenuRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!invMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (invMenuRef.current && !invMenuRef.current.contains(e.target as Node)) setInvMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setInvMenuOpen(false);
+    document.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [invMenuOpen]);
+  const equipmentList = EQUIPMENT_INVENTORY.filter((e) => e.category !== 'site');
+  const extraList = EQUIPMENT_INVENTORY.filter((e) => e.category === 'site')
+    .map((e, i) => ({ e, i, g: EXTRA_GROUP_ORDER.indexOf(extraGroupOf(e.visualType)) }))
+    .sort((a, b) => a.g - b.g || typeRank(a.e.visualType) - typeRank(b.e.visualType) || a.i - b.i)
+    .map((x) => x.e);
+  const inventory = invView === 'extra' ? extraList : equipmentList;
+  const INVENTORY_VIEWS = [
+    { id: 'equipment' as const, label: 'Racing Assets', hint: 'Gates, flags, cubes, containers, pads', count: equipmentList.length },
+    { id: 'extra' as const, label: 'Environment Assets', hint: 'Trees, grass, ground, buildings, props', count: extraList.length },
+  ];
   const [confirmDeleteEquipId, setConfirmDeleteEquipId] = React.useState<string | null>(null);
   const [yawRotateMode, setYawRotateMode] = React.useState<'heading' | 'orbit'>('heading');
   const [isYawExpanded, setIsYawExpanded] = React.useState<boolean>(true);
 
-  const totalUsed = items.length;
+  // Count racing pieces only: site scenery (roads, trees, buildings...) isn't gates
+  const totalUsed = items.filter((i) => EQUIPMENT_MAP.get(i.equipId)?.category !== 'site').length;
 
   const handleDragStart = (e: React.DragEvent, equipId: string) => {
     e.dataTransfer.setData('text/plain', equipId);
@@ -124,10 +196,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id="inventory-sidebar"
       className={`w-80 md:w-88 flex flex-col bg-slate-900/95 backdrop-blur-md border-r border-slate-800 text-slate-200 select-none z-20 shrink-0 h-full shadow-2xl compact:fixed compact:inset-y-0 compact:left-0 compact:z-50 compact:w-[min(22rem,88vw)] compact:bg-slate-900 compact:transition-transform compact:duration-200 safe-drawer ${
         mobileOpen ? '' : 'compact:-translate-x-full compact:shadow-none'
-      }`}
+      } ${desktopHidden ? 'tg-desktop-hidden' : ''}`}
     >
-      {/* App Header */}
-      <div className="p-4 border-b border-slate-800 bg-tg-panel">
+      {/* App Header: kept above the list below, so the grounds dropdown isn't covered
+          (the Animated look's frosted panels each form their own layer) */}
+      <div className="relative z-30 p-4 border-b border-slate-800 bg-tg-panel">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-sky-500/20 text-white font-bold font-mono text-sm">
             TG
@@ -139,6 +212,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onCreate={onCreateGround}
             onDelete={onDeleteGround}
           />
+          {onHideDesktop && (
+            <button
+              type="button"
+              onClick={onHideDesktop}
+              className="compact:hidden ml-auto shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-400 hover:text-sky-300 hover:border-sky-500/60"
+              aria-label="Hide panel"
+              title="Hide this panel so the field fills the window"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
+          )}
           {onCloseMobile && (
             <button
               type="button"
@@ -168,22 +252,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Equipment Inventory List */}
+      {/* Racing Assets List */}
       <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-2.5 custom-scrollbar">
         <div className="flex items-center justify-between text-[11px] font-mono tracking-wider text-slate-400 uppercase px-1">
-          <span className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-sky-400" />
-            Equipment Inventory
-          </span>
+          {/* Heading doubles as a picker: Racing Assets or Environment Assets */}
+          <div ref={invMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setInvMenuOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={invMenuOpen}
+              className="flex items-center gap-1.5 uppercase tracking-wider hover:text-slate-200 rounded px-0.5 -mx-0.5"
+              title="Switch between racing assets and environment assets (trees, grass, buildings...)"
+            >
+              {invView === 'extra' ? <Trees className="w-3.5 h-3.5 text-emerald-400" /> : <Layers className="w-3.5 h-3.5 text-sky-400" />}
+              {invView === 'extra' ? 'Environment Assets' : 'Racing Assets'}
+              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${invMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {invMenuOpen && (
+              <div role="menu" className="absolute left-0 top-full mt-1.5 z-40 w-64 bg-tg-panel border border-slate-700 rounded-xl shadow-2xl p-1 normal-case tracking-normal">
+                {INVENTORY_VIEWS.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={invView === v.id}
+                    onClick={() => {
+                      setInvView(v.id);
+                      setInvMenuOpen(false);
+                    }}
+                    className={`w-full text-left flex items-center gap-2 px-2.5 py-2 rounded-lg ${invView === v.id ? 'bg-sky-500/15 text-sky-200' : 'text-slate-300 hover:bg-slate-800'}`}
+                  >
+                    {v.id === 'extra' ? <Trees className="w-4 h-4 text-emerald-400 shrink-0" /> : <Layers className="w-4 h-4 text-sky-400 shrink-0" />}
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-xs font-semibold">
+                        {v.label} <span className="text-slate-500 font-normal">({v.count})</span>
+                      </span>
+                      <span className="block text-[10px] text-slate-500 truncate">{v.hint}</span>
+                    </span>
+                    {invView === v.id && <Check className="w-3.5 h-3.5 text-sky-300 shrink-0" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* Custom pieces are racing assets, so New item lives on that list only */}
+          {invView === 'equipment' && (
           <button
-            onClick={() => setCreatingEquipment(true)}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 normal-case tracking-normal text-[10px] font-semibold"
-            title="Design your own gate, flag or cube"
-          >
-            <Plus className="w-3 h-3" /> New item
-          </button>
+              onClick={() => setCreatingEquipment(true)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 normal-case tracking-normal text-[10px] font-semibold"
+              title="Design your own gate, flag or cube"
+            >
+              <Plus className="w-3 h-3" /> New item
+            </button>
+          )}
         </div>
-        {creatingEquipment && (
+        {creatingEquipment && invView === 'equipment' && (
           <EquipmentCreator
             existingNames={EQUIPMENT_INVENTORY.map((e) => e.name.toLowerCase())}
             onCancel={() => setCreatingEquipment(false)}
@@ -383,13 +507,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {EQUIPMENT_INVENTORY.map((eq) => {
+        {inventory.map((eq, idx) => {
+          // Extra elements: a small heading where each group starts (Trees & grass first)
+          const group = invView === 'extra' ? extraGroupOf(eq.visualType) : null;
+          const groupHeading =
+            group && (idx === 0 || extraGroupOf(inventory[idx - 1].visualType) !== group) ? (
+              <div className="pt-2 px-1 text-[10px] font-mono uppercase tracking-wider text-emerald-300/80">{group}</div>
+            ) : null;
           const placedCount = items.filter((i) => i.equipId === eq.id).length;
           const isPlacing = placingEquipId === eq.id;
 
           return (
+            <React.Fragment key={eq.id}>
+            {groupHeading}
             <div
-              key={eq.id}
               id={`inventory-item-${eq.id}`}
               draggable
               onDragStart={(e) => handleDragStart(e, eq.id)}
@@ -405,7 +536,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-3">
                 {/* Visual Icon Matching Exact Spec */}
                 <div className="w-12 h-10 rounded bg-tg-panel border border-slate-800 flex items-center justify-center shrink-0 p-1">
-                  <EquipmentVisualPreview visualType={eq.visualType} />
+                  <EquipmentVisualPreview visualType={eq.visualType} color={eq.color} />
                 </div>
 
                 {/* Details */}
@@ -519,6 +650,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               )}
             </div>
+            </React.Fragment>
           );
         })}
 
@@ -665,6 +797,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
 
+        {onOpenGroundMark && (
+          <button
+            id="btn-ground-mark"
+            onClick={onOpenGroundMark}
+            className="w-full py-2 px-3 rounded border border-slate-800 bg-slate-900 hover:border-sky-500/60 hover:bg-slate-800 text-xs font-mono text-slate-300 transition flex items-center justify-center gap-1.5"
+            title="Paint the ground name, your own text or a logo across the field"
+          >
+            <Type className="w-3.5 h-3.5 text-sky-400" />
+            <span>On ground:</span>
+            <span className="text-sky-300 font-bold truncate">{groundMarkLabel}</span>
+          </button>
+        )}
+
         <button
           id="btn-clear-field"
           onClick={handleClearClick}
@@ -684,7 +829,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 };
 
 // Visual representation preview component in inventory
-function EquipmentVisualPreview({ visualType }: { visualType: string }) {
+function EquipmentVisualPreview({ visualType, color }: { visualType: string; color?: string }) {
   switch (visualType) {
     case 'single_gate_blue':
       // Blue rectangle
@@ -760,7 +905,55 @@ function EquipmentVisualPreview({ visualType }: { visualType: string }) {
         </div>
       );
 
+    case 'round_gate':
+      return <div className="w-5 h-5 rounded-full border-[3px] border-pink-400 bg-pink-950/30" />;
+
+    case 'container':
+      // Long box, solid sides, open ends
+      return (
+        <div className="w-8 h-3.5 bg-amber-700 border-y-2 border-amber-400 flex items-center justify-center">
+          <span className="text-[6px] text-amber-100 font-bold leading-none">20FT</span>
+        </div>
+      );
+
+    case 'launch_pad':
+      return (
+        <div className="w-5 h-5 bg-gray-900 border-2 border-yellow-400 rounded-xs flex items-center justify-center">
+          <span className="text-[9px] text-white font-bold leading-none">H</span>
+        </div>
+      );
+
+    case 'pilot_pit':
+      return (
+        <div className="flex gap-0.5">
+          <div className="w-3.5 h-3.5 bg-slate-600 border border-slate-300 rounded-xs" />
+          <div className="w-3.5 h-3.5 bg-slate-600 border border-slate-300 rounded-xs" />
+        </div>
+      );
+
+    case 'tree_big':
+    case 'tree_small':
+    case 'palm':
+    case 'scrub_patch':
+      return <div className="w-6 h-6 rounded-full border-2 border-black/20" style={{ background: color }} />;
+    case 'grass':
+      return (
+        <div className="w-8 h-5 rounded-sm flex items-end justify-around px-0.5" style={{ background: color }}>
+          {[3, 5, 4, 6, 3].map((h, i) => (
+            <span key={i} className="w-0.5 rounded-t-full bg-lime-300/70" style={{ height: h * 2 }} />
+          ))}
+        </div>
+      );
+    case 'gravel_road':
+    case 'dirt_lane':
+    case 'dirt_curve':
+    case 'berm':
+      return <div className="w-8 h-2.5 rounded-sm" style={{ background: color }} />;
+    case 'floodlight':
+    case 'light_pole':
+    case 'mast':
+      return <div className="w-1.5 h-7 rounded-sm" style={{ background: color }} />;
     default:
-      return <div className="w-4 h-4 bg-slate-700" />;
+      return <div className="w-7 h-5 rounded-sm border border-black/20" style={{ background: color ?? '#334155' }} />;
   }
 }

@@ -1,0 +1,1378 @@
+{
+ "id": "track-main-uae-fpv",
+ "name": "Main UAE FPV",
+ "date": "2026-11-22T13:59:27.352293",
+ "items": [
+  {
+   "id": "site-001",
+   "equipId": "turf-pitch",
+   "x": 112.0,
+   "y": 209.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 90,
+   "sizeD": 59,
+   "locked": true
+  },
+  {
+   "id": "site-002",
+   "equipId": "sand-pit",
+   "x": 121.8,
+   "y": 161.9,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 76,
+   "sizeD": 24,
+   "locked": true
+  },
+  {
+   "id": "site-003",
+   "equipId": "asphalt-apron",
+   "x": 44.0,
+   "y": 198.3,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 39,
+   "sizeD": 96,
+   "locked": true
+  },
+  {
+   "id": "site-004",
+   "equipId": "gravel-road",
+   "x": 100,
+   "y": 116.7,
+   "rotation": 90,
+   "sequenceOrder": null,
+   "sizeW": 6,
+   "sizeD": 200,
+   "locked": true
+  },
+  {
+   "id": "site-005",
+   "equipId": "dirt-area",
+   "x": 116.98,
+   "y": 46.84,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 45.1,
+   "sizeD": 90.2,
+   "locked": true
+  },
+  {
+   "id": "site-006",
+   "equipId": "dirt-lane",
+   "x": 133.02,
+   "y": 4.13,
+   "rotation": 359.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 7.4,
+   "locked": true
+  },
+  {
+   "id": "site-007",
+   "equipId": "dirt-lane",
+   "x": 133.08,
+   "y": 10.16,
+   "rotation": 359.5,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.6,
+   "locked": true
+  },
+  {
+   "id": "site-008",
+   "equipId": "dirt-lane",
+   "x": 133.15,
+   "y": 17.64,
+   "rotation": 359.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 10.4,
+   "locked": true
+  },
+  {
+   "id": "site-009",
+   "equipId": "dirt-lane",
+   "x": 133.25,
+   "y": 25.14,
+   "rotation": 359.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.6,
+   "locked": true
+  },
+  {
+   "id": "site-010",
+   "equipId": "dirt-lane",
+   "x": 133.35,
+   "y": 31.92,
+   "rotation": 359.2,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 8.9,
+   "locked": true
+  },
+  {
+   "id": "site-011",
+   "equipId": "dirt-lane",
+   "x": 133.44,
+   "y": 38.29,
+   "rotation": 359.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 8.8,
+   "locked": true
+  },
+  {
+   "id": "site-012",
+   "equipId": "dirt-lane",
+   "x": 133.55,
+   "y": 44.37,
+   "rotation": 358.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 8.3,
+   "locked": true
+  },
+  {
+   "id": "site-013",
+   "equipId": "dirt-lane",
+   "x": 133.8,
+   "y": 49.72,
+   "rotation": 356.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 7.4,
+   "locked": true
+  },
+  {
+   "id": "site-014",
+   "equipId": "dirt-lane",
+   "x": 134.2,
+   "y": 54.01,
+   "rotation": 352.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 6.2,
+   "locked": true
+  },
+  {
+   "id": "site-015",
+   "equipId": "dirt-lane",
+   "x": 134.73,
+   "y": 57.25,
+   "rotation": 348.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.3,
+   "locked": true
+  },
+  {
+   "id": "site-016",
+   "equipId": "dirt-lane",
+   "x": 135.42,
+   "y": 59.77,
+   "rotation": 340.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-017",
+   "equipId": "dirt-lane",
+   "x": 136.36,
+   "y": 61.93,
+   "rotation": 332.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-018",
+   "equipId": "dirt-lane",
+   "x": 137.61,
+   "y": 63.95,
+   "rotation": 324.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-019",
+   "equipId": "dirt-lane",
+   "x": 139.15,
+   "y": 65.75,
+   "rotation": 314.5,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-020",
+   "equipId": "dirt-lane",
+   "x": 140.95,
+   "y": 67.28,
+   "rotation": 306.0,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-021",
+   "equipId": "dirt-lane",
+   "x": 143.04,
+   "y": 68.62,
+   "rotation": 299.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.1,
+   "locked": true
+  },
+  {
+   "id": "site-022",
+   "equipId": "dirt-lane",
+   "x": 145.48,
+   "y": 69.82,
+   "rotation": 293.2,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.4,
+   "locked": true
+  },
+  {
+   "id": "site-023",
+   "equipId": "dirt-lane",
+   "x": 148.3,
+   "y": 70.86,
+   "rotation": 287.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.7,
+   "locked": true
+  },
+  {
+   "id": "site-024",
+   "equipId": "dirt-lane",
+   "x": 151.36,
+   "y": 71.74,
+   "rotation": 284.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.7,
+   "locked": true
+  },
+  {
+   "id": "site-025",
+   "equipId": "dirt-lane",
+   "x": 154.41,
+   "y": 72.47,
+   "rotation": 282.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.6,
+   "locked": true
+  },
+  {
+   "id": "site-026",
+   "equipId": "dirt-lane",
+   "x": 157.41,
+   "y": 73.06,
+   "rotation": 279.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.6,
+   "locked": true
+  },
+  {
+   "id": "site-027",
+   "equipId": "dirt-lane",
+   "x": 160.49,
+   "y": 73.5,
+   "rotation": 276.5,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.6,
+   "locked": true
+  },
+  {
+   "id": "site-028",
+   "equipId": "dirt-lane",
+   "x": 163.43,
+   "y": 73.8,
+   "rotation": 275.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.3,
+   "locked": true
+  },
+  {
+   "id": "site-029",
+   "equipId": "dirt-lane",
+   "x": 165.77,
+   "y": 74.01,
+   "rotation": 275.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.4,
+   "locked": true
+  },
+  {
+   "id": "site-030",
+   "equipId": "dirt-lane",
+   "x": 93.35,
+   "y": 4.28,
+   "rotation": 358.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 7.4,
+   "locked": true
+  },
+  {
+   "id": "site-031",
+   "equipId": "dirt-lane",
+   "x": 93.46,
+   "y": 10.2,
+   "rotation": 358.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.5,
+   "locked": true
+  },
+  {
+   "id": "site-032",
+   "equipId": "dirt-lane",
+   "x": 93.61,
+   "y": 17.6,
+   "rotation": 358.8,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 10.3,
+   "locked": true
+  },
+  {
+   "id": "site-033",
+   "equipId": "dirt-lane",
+   "x": 93.79,
+   "y": 25.21,
+   "rotation": 358.5,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.9,
+   "locked": true
+  },
+  {
+   "id": "site-034",
+   "equipId": "dirt-lane",
+   "x": 93.96,
+   "y": 32.5,
+   "rotation": 358.8,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.7,
+   "locked": true
+  },
+  {
+   "id": "site-035",
+   "equipId": "dirt-lane",
+   "x": 94.1,
+   "y": 39.83,
+   "rotation": 359.0,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 10.0,
+   "locked": true
+  },
+  {
+   "id": "site-036",
+   "equipId": "dirt-lane",
+   "x": 94.28,
+   "y": 47.02,
+   "rotation": 357.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 9.4,
+   "locked": true
+  },
+  {
+   "id": "site-037",
+   "equipId": "dirt-lane",
+   "x": 94.67,
+   "y": 53.22,
+   "rotation": 354.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 8.0,
+   "locked": true
+  },
+  {
+   "id": "site-038",
+   "equipId": "dirt-lane",
+   "x": 95.4,
+   "y": 57.73,
+   "rotation": 344.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 6.1,
+   "locked": true
+  },
+  {
+   "id": "site-039",
+   "equipId": "dirt-lane",
+   "x": 96.5,
+   "y": 60.54,
+   "rotation": 329.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.0,
+   "locked": true
+  },
+  {
+   "id": "site-040",
+   "equipId": "dirt-lane",
+   "x": 97.78,
+   "y": 62.37,
+   "rotation": 320.0,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.5,
+   "locked": true
+  },
+  {
+   "id": "site-041",
+   "equipId": "dirt-lane",
+   "x": 98.95,
+   "y": 64.05,
+   "rotation": 330.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.6,
+   "locked": true
+  },
+  {
+   "id": "site-042",
+   "equipId": "dirt-lane",
+   "x": 99.85,
+   "y": 66.09,
+   "rotation": 341.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-043",
+   "equipId": "dirt-lane",
+   "x": 100.52,
+   "y": 68.35,
+   "rotation": 345.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-044",
+   "equipId": "dirt-lane",
+   "x": 101.04,
+   "y": 70.6,
+   "rotation": 348.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-045",
+   "equipId": "dirt-lane",
+   "x": 101.43,
+   "y": 72.85,
+   "rotation": 351.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-046",
+   "equipId": "dirt-lane",
+   "x": 101.72,
+   "y": 75.13,
+   "rotation": 353.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-047",
+   "equipId": "dirt-lane",
+   "x": 101.91,
+   "y": 77.44,
+   "rotation": 356.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-048",
+   "equipId": "dirt-lane",
+   "x": 101.98,
+   "y": 79.73,
+   "rotation": 360.0,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-049",
+   "equipId": "dirt-lane",
+   "x": 101.9,
+   "y": 81.93,
+   "rotation": 4.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.6,
+   "locked": true
+  },
+  {
+   "id": "site-050",
+   "equipId": "dirt-lane",
+   "x": 101.69,
+   "y": 83.98,
+   "rotation": 8.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.5,
+   "locked": true
+  },
+  {
+   "id": "site-051",
+   "equipId": "dirt-lane",
+   "x": 101.35,
+   "y": 85.87,
+   "rotation": 12.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.4,
+   "locked": true
+  },
+  {
+   "id": "site-052",
+   "equipId": "dirt-lane",
+   "x": 100.84,
+   "y": 87.65,
+   "rotation": 19.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.3,
+   "locked": true
+  },
+  {
+   "id": "site-053",
+   "equipId": "dirt-lane",
+   "x": 100.07,
+   "y": 89.37,
+   "rotation": 28.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.4,
+   "locked": true
+  },
+  {
+   "id": "site-054",
+   "equipId": "dirt-lane",
+   "x": 98.95,
+   "y": 91.09,
+   "rotation": 37.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.7,
+   "locked": true
+  },
+  {
+   "id": "site-055",
+   "equipId": "dirt-lane",
+   "x": 97.48,
+   "y": 92.8,
+   "rotation": 43.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-056",
+   "equipId": "dirt-lane",
+   "x": 95.74,
+   "y": 94.44,
+   "rotation": 49.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-057",
+   "equipId": "dirt-lane",
+   "x": 93.85,
+   "y": 95.9,
+   "rotation": 55.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-058",
+   "equipId": "dirt-lane",
+   "x": 91.86,
+   "y": 97.11,
+   "rotation": 62.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-059",
+   "equipId": "dirt-lane",
+   "x": 89.76,
+   "y": 98.06,
+   "rotation": 68.6,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.8,
+   "locked": true
+  },
+  {
+   "id": "site-060",
+   "equipId": "dirt-lane",
+   "x": 87.52,
+   "y": 98.83,
+   "rotation": 73.4,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 4.9,
+   "locked": true
+  },
+  {
+   "id": "site-061",
+   "equipId": "dirt-lane",
+   "x": 85.11,
+   "y": 99.48,
+   "rotation": 76.5,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.1,
+   "locked": true
+  },
+  {
+   "id": "site-062",
+   "equipId": "dirt-lane",
+   "x": 82.52,
+   "y": 100.02,
+   "rotation": 79.9,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.2,
+   "locked": true
+  },
+  {
+   "id": "site-063",
+   "equipId": "dirt-lane",
+   "x": 79.72,
+   "y": 100.43,
+   "rotation": 83.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.4,
+   "locked": true
+  },
+  {
+   "id": "site-064",
+   "equipId": "dirt-lane",
+   "x": 76.77,
+   "y": 100.74,
+   "rotation": 84.7,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.5,
+   "locked": true
+  },
+  {
+   "id": "site-065",
+   "equipId": "dirt-lane",
+   "x": 73.7,
+   "y": 101.03,
+   "rotation": 84.3,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.6,
+   "locked": true
+  },
+  {
+   "id": "site-066",
+   "equipId": "dirt-lane",
+   "x": 70.37,
+   "y": 101.38,
+   "rotation": 83.8,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 6.1,
+   "locked": true
+  },
+  {
+   "id": "site-067",
+   "equipId": "dirt-lane",
+   "x": 66.64,
+   "y": 101.78,
+   "rotation": 84.0,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 6.4,
+   "locked": true
+  },
+  {
+   "id": "site-068",
+   "equipId": "dirt-lane",
+   "x": 62.93,
+   "y": 102.17,
+   "rotation": 84.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 6.0,
+   "locked": true
+  },
+  {
+   "id": "site-069",
+   "equipId": "dirt-lane",
+   "x": 59.94,
+   "y": 102.48,
+   "rotation": 84.1,
+   "sequenceOrder": null,
+   "sizeW": 9,
+   "sizeD": 5.0,
+   "locked": true
+  },
+  {
+   "id": "site-070",
+   "equipId": "sand-berm",
+   "x": 131.48,
+   "y": 24.66,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeD": 30,
+   "locked": true
+  },
+  {
+   "id": "site-071",
+   "equipId": "scrub-patch",
+   "x": 153.9,
+   "y": 33.12,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 25.3,
+   "sizeD": 63.1,
+   "locked": true
+  },
+  {
+   "id": "site-072",
+   "equipId": "scrub-patch",
+   "x": 74.1,
+   "y": 30.81,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 31.5,
+   "sizeD": 57.7,
+   "locked": true
+  },
+  {
+   "id": "site-073",
+   "equipId": "scrub-patch",
+   "x": 108.29,
+   "y": 104.62,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 99.1,
+   "sizeD": 19.8,
+   "locked": true
+  },
+  {
+   "id": "site-074",
+   "equipId": "scrub-patch",
+   "x": 77.5,
+   "y": 81.32,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 37.8,
+   "sizeD": 32.5,
+   "locked": true
+  },
+  {
+   "id": "site-075",
+   "equipId": "scrub-patch",
+   "x": 155.12,
+   "y": 96.26,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 23.5,
+   "sizeD": 32.5,
+   "locked": true
+  },
+  {
+   "id": "site-076",
+   "equipId": "scrub-patch",
+   "x": 112.95,
+   "y": 133.91,
+   "rotation": 359.7,
+   "sequenceOrder": null,
+   "sizeW": 108.2,
+   "sizeD": 24.4,
+   "locked": true
+  },
+  {
+   "id": "site-077",
+   "equipId": "scrub-patch",
+   "x": 182,
+   "y": 204,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 34,
+   "sizeD": 110,
+   "locked": true
+  },
+  {
+   "id": "site-078",
+   "equipId": "scrub-patch",
+   "x": 180,
+   "y": 133,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 40,
+   "sizeD": 24,
+   "locked": true
+  },
+  {
+   "id": "site-079",
+   "equipId": "scrub-patch",
+   "x": 13,
+   "y": 46,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 26,
+   "sizeD": 80,
+   "locked": true
+  },
+  {
+   "id": "site-080",
+   "equipId": "floodlight-pole",
+   "x": 65.5,
+   "y": 178.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-081",
+   "equipId": "floodlight-pole",
+   "x": 159.5,
+   "y": 178.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-082",
+   "equipId": "floodlight-pole",
+   "x": 65.5,
+   "y": 241,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-083",
+   "equipId": "floodlight-pole",
+   "x": 159.5,
+   "y": 241,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-084",
+   "equipId": "floodlight-pole",
+   "x": 159.5,
+   "y": 209.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-085",
+   "equipId": "floodlight-pole",
+   "x": 65.5,
+   "y": 209.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-086",
+   "equipId": "triple-6x2",
+   "x": 124.1,
+   "y": 217.1,
+   "rotation": 90,
+   "sequenceOrder": 1
+  },
+  {
+   "id": "site-087",
+   "equipId": "flag-3m",
+   "x": 101.6,
+   "y": 214.4,
+   "rotation": 0,
+   "sequenceOrder": 2
+  },
+  {
+   "id": "site-088",
+   "equipId": "triple-6x2",
+   "x": 99.2,
+   "y": 200.7,
+   "rotation": 270,
+   "sequenceOrder": 3
+  },
+  {
+   "id": "site-089",
+   "equipId": "flag-3m",
+   "x": 79.8,
+   "y": 203.4,
+   "rotation": 0,
+   "sequenceOrder": 4
+  },
+  {
+   "id": "site-090",
+   "equipId": "single-1.5",
+   "x": 112.0,
+   "y": 193.8,
+   "rotation": 90,
+   "sequenceOrder": 5
+  },
+  {
+   "id": "site-091",
+   "equipId": "double-cube-4x2",
+   "x": 152.5,
+   "y": 234.5,
+   "rotation": 0,
+   "sequenceOrder": 6
+  },
+  {
+   "id": "site-092",
+   "equipId": "single-1.5",
+   "x": 135,
+   "y": 196,
+   "rotation": 45,
+   "sequenceOrder": 7
+  },
+  {
+   "id": "site-093",
+   "equipId": "single-1.5",
+   "x": 71,
+   "y": 207,
+   "rotation": 90,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-094",
+   "equipId": "single-1.5",
+   "x": 71,
+   "y": 213,
+   "rotation": 90,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-095",
+   "equipId": "flagpole-national",
+   "x": 63.5,
+   "y": 206.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "logos": {
+    "flag": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAADICAIAAABJdyC1AAAACXBIWXMAAAABAAAAAQBPJcTWAAAFWklEQVR4nO3UQW1DARQDwY+o5EqtkAKjVUoht5X1ZrQMLPn5fR592PP9Jaksf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYbq15KOl7/AUP1a0vHyFxiqX0s6Xv4CQ/VrScfLX2Cofi3pePkLDNWvJR0vf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYbq15KOl7/AUP1a0vHyFxiqX0s6Xv4CQ/VrScfLX2Cofi3pePkLDNWvJR0vf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYb6eb8khfUvMNQfkOpfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgFj+AkMBsfwFhgJi+QsMBcTyFxgKiOUvMBQQy19gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgFj+AkMBsfwFhgJi+QsMBcTyFxgKiOUvMBQQy19gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgNY/D4M8ushyxa4AAAAASUVORK5CYII="
+   }
+  },
+  {
+   "id": "site-096",
+   "equipId": "flagpole-national",
+   "x": 63.5,
+   "y": 213.5,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "logos": {
+    "flag": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAZAAAADICAIAAABJdyC1AAAACXBIWXMAAAABAAAAAQBPJcTWAAAFWklEQVR4nO3UQW1DARQDwY+o5EqtkAKjVUoht5X1ZrQMLPn5fR592PP9Jaksf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYbq15KOl7/AUP1a0vHyFxiqX0s6Xv4CQ/VrScfLX2Cofi3pePkLDNWvJR0vf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYbq15KOl7/AUP1a0vHyFxiqX0s6Xv4CQ/VrScfLX2Cofi3pePkLDNWvJR0vf4Gh+rWk4+UvMFS/lnS8/AWG6teSjpe/wFD9WtLx8hcYql9LOl7+AkP1a0nHy19gqH4t6Xj5CwzVryUdL3+Bofq1pOPlLzBUv5Z0vPwFhurXko6Xv8BQ/VrS8fIXGKpfSzpe/gJD9WtJx8tfYKh+Lel4+QsM1a8lHS9/gaH6taTj5S8wVL+WdLz8BYb6eb8khfUvMNQfkOpfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gqHosuK5/gaHqseC6/gWGqseC6/oXGKoeC67rX2Coeiy4rn+Boeqx4Lr+BYaqx4Lr+hcYqh4LrutfYKh6LLiuf4Gh6rHguv4FhqrHguv6FxiqHguu619gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgFj+AkMBsfwFhgJi+QsMBcTyFxgKiOUvMBQQy19gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgFj+AkMBsfwFhgJi+QsMBcTyFxgKiOUvMBQQy19gKCCWv8BQQCx/gaGAWP4CQwGx/AWGAmL5CwwFxPIXGAqI5S8wFBDLX2AoIJa/wFBALH+BoYBY/gJDAbH8BYYCYvkLDAXE8hcYCojlLzAUEMtfYCgglr/AUEAsf4GhgNY/D4M8ushyxa4AAAAASUVORK5CYII="
+   }
+  },
+  {
+   "id": "site-097",
+   "equipId": "gazebo-pink",
+   "x": 59,
+   "y": 204,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-098",
+   "equipId": "gazebo-pink",
+   "x": 59,
+   "y": 216,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-099",
+   "equipId": "portable-cabin",
+   "x": 62,
+   "y": 242.5,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-100",
+   "equipId": "double-arch-frame",
+   "x": 121.8,
+   "y": 161.9,
+   "rotation": 90,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-101",
+   "equipId": "gazebo-green",
+   "x": 90,
+   "y": 158,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-102",
+   "equipId": "shade-shed",
+   "x": 70.9,
+   "y": 161.2,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 8,
+   "sizeD": 20,
+   "locked": true
+  },
+  {
+   "id": "site-103",
+   "equipId": "tree-small",
+   "x": 70.1,
+   "y": 144.2,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-104",
+   "equipId": "tree-small",
+   "x": 69.9,
+   "y": 138.4,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-105",
+   "equipId": "tree-small",
+   "x": 141.6,
+   "y": 132,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-106",
+   "equipId": "tree-small",
+   "x": 133.5,
+   "y": 132,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-107",
+   "equipId": "tree-small",
+   "x": 117.4,
+   "y": 132,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-108",
+   "equipId": "tree-small",
+   "x": 106.6,
+   "y": 132,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-109",
+   "equipId": "tree-small",
+   "x": 93.2,
+   "y": 136,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-110",
+   "equipId": "tree-small",
+   "x": 82.4,
+   "y": 132,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-111",
+   "equipId": "tree-small",
+   "x": 59.6,
+   "y": 136,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-112",
+   "equipId": "palm-tree",
+   "x": 52.6,
+   "y": 126.1,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-113",
+   "equipId": "palm-tree",
+   "x": 45.2,
+   "y": 122.4,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-114",
+   "equipId": "palm-tree",
+   "x": 48.2,
+   "y": 127.7,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-115",
+   "equipId": "palm-tree",
+   "x": 49.7,
+   "y": 119.4,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-116",
+   "equipId": "building-white",
+   "x": 17.5,
+   "y": 185.3,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 22,
+   "sizeD": 30,
+   "locked": true
+  },
+  {
+   "id": "site-117",
+   "equipId": "building-white",
+   "x": 20.0,
+   "y": 245.9,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "sizeW": 19,
+   "sizeD": 23,
+   "locked": true
+  },
+  {
+   "id": "site-118",
+   "equipId": "telecom-mast",
+   "x": 15,
+   "y": 156,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-119",
+   "equipId": "container-40ft-rust",
+   "x": 110.35,
+   "y": 55.5,
+   "rotation": 226.7,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-120",
+   "equipId": "container-20ft-teal",
+   "x": 110.6,
+   "y": 55.4,
+   "rotation": 316.7,
+   "sequenceOrder": null,
+   "elevation": 2.59
+  },
+  {
+   "id": "site-121",
+   "equipId": "vehicle-wreck",
+   "x": 125.0,
+   "y": 68.3,
+   "rotation": 225.0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-122",
+   "equipId": "cable-drum",
+   "x": 106.6,
+   "y": 76.8,
+   "rotation": 30,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-123",
+   "equipId": "jeep-wreck",
+   "x": 89.4,
+   "y": 95.9,
+   "rotation": 20,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-124",
+   "equipId": "tyre",
+   "x": 78.1,
+   "y": 85.7,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-125",
+   "equipId": "tyre",
+   "x": 82.5,
+   "y": 73.3,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-126",
+   "equipId": "tyre",
+   "x": 84.4,
+   "y": 71.6,
+   "rotation": 0,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-127",
+   "equipId": "tree-ghaf",
+   "x": 125.3,
+   "y": 87.39,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-128",
+   "equipId": "open-shelter",
+   "x": 120.87,
+   "y": 12.54,
+   "rotation": 90,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-129",
+   "equipId": "portable-cabin",
+   "x": 120.04,
+   "y": 27.43,
+   "rotation": 90,
+   "sequenceOrder": null
+  },
+  {
+   "id": "site-130",
+   "equipId": "light-pole",
+   "x": 147.33,
+   "y": 73.48,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-131",
+   "equipId": "light-pole",
+   "x": 109.23,
+   "y": 67.35,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-132",
+   "equipId": "light-pole",
+   "x": 99.18,
+   "y": 95.19,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-133",
+   "equipId": "light-pole",
+   "x": 104.63,
+   "y": 103.73,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-134",
+   "equipId": "light-pole",
+   "x": 122.31,
+   "y": 120.79,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  },
+  {
+   "id": "site-135",
+   "equipId": "floodlight-pole",
+   "x": 136.62,
+   "y": 5.24,
+   "rotation": 0,
+   "sequenceOrder": null,
+   "locked": true
+  }
+ ],
+ "closeLoop": true,
+ "droneSpeedKmH": 60,
+ "ground": {
+  "name": "Main UAE FPV",
+  "width": 200,
+  "height": 260
+ },
+ "groundMark": {
+  "mode": "none"
+ }
+}

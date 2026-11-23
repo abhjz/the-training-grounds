@@ -68,6 +68,7 @@ export function makeCustomDef(input: CustomEquipmentInput, id = `custom-${Date.n
     description: input.note?.trim() || `Custom ${info.label.toLowerCase()} · ${fmt(input.width)}m wide`,
     isGate: true,
     isCustom: true,
+    resizable: true,
     tierHeight: input.height,
     customShape: input.shape,
   };

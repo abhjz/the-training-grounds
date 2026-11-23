@@ -10,7 +10,8 @@ import * as THREE from 'three';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M, PERIMETER_FENCE_M } from '../constants/equipment';
 import { FieldColors } from '../theme/engine';
 import { TRADING_FLOOR } from '../theme/tradingFloor';
-import { drawWatermarkText } from '../utils/watermark';
+import { drawWatermarkText, GroundMarkSource, hasGroundMark } from '../utils/watermark';
+import { useSceneryMotion } from '../hooks/useSceneryMotion';
 import { useMediaMatch } from '../hooks/useMediaMatch';
 
 const noPick = () => {};
@@ -26,7 +27,7 @@ function NoPick({ children }: { children: React.ReactNode }) {
   return <group ref={ref}>{children}</group>;
 }
 
-export function TradingField({ groundName, fc }: { groundName: string; fc: FieldColors }) {
+export function TradingField({ groundName, fc }: { groundName: GroundMarkSource; fc: FieldColors }) {
   const w = FIELD_WIDTH_M;
   const h = FIELD_HEIGHT_M;
   const f = PERIMETER_FENCE_M;
@@ -36,7 +37,7 @@ export function TradingField({ groundName, fc }: { groundName: string; fc: Field
     c.width = Math.round(w * pxPerM);
     c.height = Math.round(h * pxPerM);
     const ctx = c.getContext('2d');
-    if (ctx && groundName.trim()) drawWatermarkText(ctx, groundName, c.width, c.height, 'rgba(234, 236, 239, 0.06)');
+    if (ctx && hasGroundMark(groundName)) drawWatermarkText(ctx, groundName, c.width, c.height, 'rgba(234, 236, 239, 0.06)');
     return new THREE.CanvasTexture(c);
   }, [groundName, w, h]);
   useEffect(() => () => watermark.dispose(), [watermark]);
@@ -162,7 +163,7 @@ function Candles({ animate, compact }: { animate: boolean; compact: boolean }) {
 }
 
 export function TradingFloorWorld({ scale = 1 }: { scale?: number }) {
-  const animate = !useMediaMatch('(prefers-reduced-motion: reduce)');
+  const animate = useSceneryMotion();
   const compact = useMediaMatch('(max-width: 767px)');
   const floorGrid = useMemo(() => {
     const p: number[] = [];

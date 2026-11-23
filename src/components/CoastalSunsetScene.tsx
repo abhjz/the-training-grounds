@@ -10,7 +10,8 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M, PERIMETER_FENCE_M } from '../constants/equipment';
 import { FieldColors } from '../theme/engine';
-import { drawWatermarkText } from '../utils/watermark';
+import { drawWatermarkText, GroundMarkSource, hasGroundMark } from '../utils/watermark';
+import { useSceneryMotion } from '../hooks/useSceneryMotion';
 import { COASTAL_SUNSET } from '../theme/coastalSunset';
 import { useMediaMatch } from '../hooks/useMediaMatch';
 
@@ -55,7 +56,7 @@ function texture(c: HTMLCanvasElement, srgb = true) {
 }
 
 // ---------------------------------------------------------------- the field pad (exported)
-function useSurface(name: string) {
+function useSurface(name: GroundMarkSource) {
   return useMemo(() => {
     const [c, ctx] = canvas(1024, 768);
     const g = ctx.createLinearGradient(0, 0, 1024, 768);
@@ -86,14 +87,14 @@ function useSurface(name: string) {
       ctx.lineTo(x + 60, 768);
       ctx.stroke();
     }
-    if (name.trim()) drawWatermarkText(ctx, name, 1024, 768, 'rgba(255,225,218,.12)');
+    if (hasGroundMark(name)) drawWatermarkText(ctx, name, 1024, 768, 'rgba(255,225,218,.12)');
     const tex = texture(c);
     tex.anisotropy = 8;
     return tex;
   }, [name]);
 }
 
-export function CoastalField({ groundName, fc }: { groundName: string; fc: FieldColors }) {
+export function CoastalField({ groundName, fc }: { groundName: GroundMarkSource; fc: FieldColors }) {
   const map = useSurface(groundName);
   useEffect(() => () => map.dispose(), [map]);
   const w = FIELD_WIDTH_M;
@@ -1030,7 +1031,7 @@ function Birds({ animate }: { animate: boolean }) {
 
 // ---------------------------------------------------------------- scene
 export function CoastalSunsetWorld({ scale = 1, fogNear = 140, fogFar = 460 }: { scale?: number; fogNear?: number; fogFar?: number }) {
-  const animate = !useMediaMatch('(prefers-reduced-motion: reduce)');
+  const animate = useSceneryMotion();
   const compact = useMediaMatch('(max-width: 767px)');
   return (
     <group scale={scale} userData={{ noExport: true }}>

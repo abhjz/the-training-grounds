@@ -4,9 +4,10 @@ import {
   EQUIPMENT_MAP,
   FIELD_HEIGHT_M,
   FIELD_WIDTH_M,
-  PERIMETER_FENCE_M,
-} from '../constants/equipment';
-import { drawWatermarkText } from './watermark';
+  PERIMETER_FENCE_M, byLayer } from '../constants/equipment';
+import { activeGroundPaint, drawWatermarkText } from './watermark';
+import { drawSiteItem } from './siteDraw';
+import { itemDims, layerOfType } from '../constants/siteEquipment';
 import { getManeuverBadgeLayout } from './trackMath';
 import { fieldColors, rgba } from '../theme/engine';
 import { drawDockPlanks, drawDockSurroundings } from './dockArt';
@@ -185,8 +186,13 @@ export function drawFieldScene(options: RenderOptions) {
   ctx.lineTo(fieldW / 2, fieldH / 2 + 1.5);
   ctx.stroke();
 
-  // Ground name watermark, printed faintly across the blueprint (also appears in PNG exports)
-  drawWatermarkText(ctx, ACTIVE_GROUND_NAME, fieldW, fieldH, 'rgba(148, 163, 184, 0.09)');
+  // Ground pieces first (turf, roads, track, grass, scrub): everything else sits on them
+  const layered = byLayer(items);
+  const isGround = (it: PlacedItem) => layerOfType(EQUIPMENT_MAP.get(it.equipId)?.visualType) < 2;
+  layered.filter(isGround).forEach((item) => drawPlacedItem(ctx, item, item.id === selectedItemId, item.id === hoveredItemId, drawnPath));
+
+  // Ground marking (name, your text or a logo) painted on top of the ground pieces (also in PNG exports)
+  drawWatermarkText(ctx, activeGroundPaint() ?? ACTIVE_GROUND_NAME, fieldW, fieldH, 'rgba(148, 163, 184, 0.09)');
 
   // 3. Clear Boundary: 3m Perimeter Fence
   // 3m inset safety buffer zone
@@ -231,8 +237,8 @@ export function drawFieldScene(options: RenderOptions) {
     drawActiveDrawingStroke(ctx, activeStroke, cursorWorld, drawnPathColor);
   }
 
-  // 5. Draw Placed Equipment Items
-  items.forEach((item) => {
+  // 5. Draw Placed Equipment Items (the ground pieces were drawn under the race line already)
+  layered.filter((it) => !isGround(it)).forEach((item) => {
     const isSelected = item.id === selectedItemId;
     const isHovered = item.id === hoveredItemId;
     drawPlacedItem(ctx, item, isSelected, isHovered, drawnPath);
@@ -744,8 +750,11 @@ function drawPlacedItem(
   isHovered: boolean,
   drawnPath: TrackPoint[] = []
 ) {
-  const equip = EQUIPMENT_MAP.get(item.equipId);
-  if (!equip) return;
+  const baseEquip = EQUIPMENT_MAP.get(item.equipId);
+  if (!baseEquip) return;
+  // Draw at this copy's own size when it has been resized
+  const dims = itemDims(item, baseEquip);
+  const equip: EquipmentDef = { ...baseEquip, width: dims.w, depth: dims.d, tierHeight: dims.h ?? baseEquip.tierHeight };
 
   const pitchDeg = item.pitch ?? 0;
   const rollDeg = item.roll ?? 0;
@@ -774,12 +783,19 @@ function drawPlacedItem(
     ctx.scale(-1, 1);
   }
 
-  // Custom pieces reuse the built-in drawings: scale to their width and tint to their colour
+  // Fixed-size drawings (stacked gates, flags...) scale to the piece's width (custom or resized);
+  // custom pieces are also tinted to their colour
+  const k = equip.width / (BASE_DRAW_WIDTH[equip.visualType] ?? equip.width);
+  if (Math.abs(k - 1) > 0.01) ctx.scale(k, k);
   if (equip.isCustom) {
-    const k = equip.width / (BASE_DRAW_WIDTH[equip.visualType] ?? equip.width);
-    if (Math.abs(k - 1) > 0.01) ctx.scale(k, k);
     const shift = hexHue(equip.color) - (BASE_DRAW_HUE[equip.visualType] ?? 0);
     if (Math.abs(shift) > 2) ctx.filter = `hue-rotate(${Math.round(shift)}deg)`;
+  }
+
+  // LED lights: a neon glow around the drawing
+  if (item.led) {
+    ctx.shadowColor = item.led;
+    ctx.shadowBlur = 14;
   }
 
   // Render specific visual types based on equipment specs:
@@ -808,6 +824,20 @@ function drawPlacedItem(
     case 'double_cube':
       drawDoubleCubeGate(ctx, equip, isSelected, isHovered, item, drawnPath);
       break;
+    case 'round_gate':
+      drawRoundGate(ctx, equip, isSelected, isHovered);
+      break;
+    case 'container':
+      drawContainer(ctx, equip, isSelected, isHovered);
+      break;
+    case 'launch_pad':
+      drawLaunchPad(ctx, equip, isSelected, isHovered);
+      break;
+    case 'pilot_pit':
+      drawPilotPit(ctx, equip, isSelected, isHovered);
+      break;
+    default:
+      drawSiteItem(ctx, item, equip, isSelected, isHovered);
   }
 
   // Draw Sequence Number Badge (top-down, unrotated so it's always upright and readable)
@@ -816,7 +846,8 @@ function drawPlacedItem(
   // Draw Sequence, Maneuver, and Mirror labels unrotated for clean reading
   drawItemLabels(ctx, item, equip, isSelected);
 
-  if (item.locked) drawLockBadge(ctx, item.x + 1.4, item.y + 1.2);
+  // Site scenery is usually locked in place; a badge on every bush and road would only clutter the map
+  if (item.locked && equip.category !== 'site') drawLockBadge(ctx, item.x + 1.4, item.y + 1.2);
 }
 
 // Widths the fixed-size drawings were made for (single gates and cubes already follow equip.width)
@@ -1948,6 +1979,166 @@ function drawDoubleCubeGate(
   ctx.restore();
 }
 
+/** Text that stays readable however the item is turned (flips it when it would be upside down). */
+function fillUprightText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number) {
+  const m = ctx.getTransform();
+  const angle = Math.atan2(m.b, m.a);
+  ctx.save();
+  ctx.translate(x, y);
+  if (Math.abs(angle) > Math.PI / 2 + 0.01) ctx.rotate(Math.PI);
+  ctx.fillText(text, 0, 0);
+  ctx.restore();
+}
+
+/** Round hoop seen from above: a thin bar across with rounded ends, and a ring symbol in the middle. */
+function drawRoundGate(ctx: CanvasRenderingContext2D, equip: EquipmentDef, isSelected: boolean, isHovered: boolean) {
+  const half = equip.width / 2;
+  const stroke = isSelected ? '#fbcfe8' : isHovered ? '#f9a8d4' : equip.borderColor;
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(0.5, 0.35, half, 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = stroke;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = 0.16;
+  ctx.beginPath();
+  ctx.moveTo(-half, 0);
+  ctx.lineTo(half, 0);
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+  // Ring symbol, so it reads as round rather than square
+  ctx.fillStyle = 'rgba(219, 39, 119, 0.25)';
+  ctx.lineWidth = 0.08;
+  ctx.beginPath();
+  ctx.arc(0, -0.75, 0.45, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  drawForwardArrow(ctx, 0, -1.45, stroke);
+}
+
+/** 20ft container from above: solid long walls, open ends (dashed), roof ribs. */
+function drawContainer(ctx: CanvasRenderingContext2D, equip: EquipmentDef, isSelected: boolean, isHovered: boolean) {
+  const hw = equip.width / 2;
+  const hd = equip.depth / 2;
+  ctx.fillStyle = 'rgba(0,0,0,0.38)';
+  ctx.fillRect(-hw + 0.5, -hd + 0.4, equip.width, equip.depth);
+  ctx.fillStyle = isSelected ? 'rgba(250, 204, 21, 0.55)' : equip.color;
+  ctx.fillRect(-hw, -hd, equip.width, equip.depth);
+  // Roof ribs across the width
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+  ctx.lineWidth = 0.04;
+  for (let y = -hd + 0.3; y < hd; y += 0.3) {
+    ctx.beginPath();
+    ctx.moveTo(-hw, y);
+    ctx.lineTo(hw, y);
+    ctx.stroke();
+  }
+  // Solid side walls
+  ctx.strokeStyle = isSelected ? '#fde68a' : isHovered ? '#fcd34d' : equip.borderColor;
+  ctx.lineWidth = 0.14;
+  ctx.beginPath();
+  ctx.moveTo(-hw, -hd);
+  ctx.lineTo(-hw, hd);
+  ctx.moveTo(hw, -hd);
+  ctx.lineTo(hw, hd);
+  ctx.stroke();
+  // Open ends
+  ctx.setLineDash([0.2, 0.15]);
+  ctx.lineWidth = 0.07;
+  ctx.beginPath();
+  ctx.moveTo(-hw, -hd);
+  ctx.lineTo(hw, -hd);
+  ctx.moveTo(-hw, hd);
+  ctx.lineTo(hw, hd);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#fff7ed';
+  ctx.font = 'bold 0.55px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.save();
+  ctx.rotate(-Math.PI / 2);
+  fillUprightText(ctx, '20FT', 0, 0);
+  ctx.restore();
+  // Arrow: which way "left wall" and "right wall" are counted (forward is +y on the map)
+  ctx.fillStyle = equip.borderColor;
+  ctx.beginPath();
+  ctx.moveTo(0, hd + 0.55);
+  ctx.lineTo(-0.3, hd + 0.15);
+  ctx.lineTo(0.3, hd + 0.15);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Launch pad: dark square, yellow border, H, and an arrow for the take-off direction. */
+function drawLaunchPad(ctx: CanvasRenderingContext2D, equip: EquipmentDef, isSelected: boolean, isHovered: boolean) {
+  const hw = equip.width / 2;
+  const hd = equip.depth / 2;
+  const accent = isSelected ? '#fef08a' : isHovered ? '#fde047' : equip.borderColor;
+  ctx.fillStyle = '#111827';
+  ctx.fillRect(-hw, -hd, equip.width, equip.depth);
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 0.1;
+  ctx.strokeRect(-hw + 0.05, -hd + 0.05, equip.width - 0.1, equip.depth - 0.1);
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 0.7px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('H', 0, 0.03);
+  // Take-off direction (forward is +y on the map)
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.moveTo(0, hd + 0.45);
+  ctx.lineTo(-0.22, hd + 0.12);
+  ctx.lineTo(0.22, hd + 0.12);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Pilot pit: canopy squares with roof seams, a table at the back and chairs facing the field. */
+function drawPilotPit(ctx: CanvasRenderingContext2D, equip: EquipmentDef, isSelected: boolean, isHovered: boolean) {
+  const w = equip.width;
+  const d = equip.depth;
+  const tents = Math.max(1, Math.round(w / 3));
+  const tw = w / tents;
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(-w / 2 + 0.5, -d / 2 + 0.4, w, d);
+  for (let i = 0; i < tents; i++) {
+    const x0 = -w / 2 + i * tw;
+    ctx.fillStyle = isSelected ? 'rgba(253, 224, 71, 0.45)' : 'rgba(71, 85, 105, 0.85)';
+    ctx.fillRect(x0, -d / 2, tw, d);
+    ctx.strokeStyle = isSelected ? '#fef08a' : isHovered ? '#cbd5e1' : equip.borderColor;
+    ctx.lineWidth = 0.08;
+    ctx.strokeRect(x0, -d / 2, tw, d);
+    ctx.lineWidth = 0.04;
+    ctx.beginPath();
+    ctx.moveTo(x0, -d / 2);
+    ctx.lineTo(x0 + tw, d / 2);
+    ctx.moveTo(x0 + tw, -d / 2);
+    ctx.lineTo(x0, d / 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#f8fafc';
+  ctx.font = 'bold 0.55px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  fillUprightText(ctx, 'PILOTS', 0, -d / 2 + 0.6);
+  // Chairs facing the field (forward is +y on the map)
+  const chairs = tents * 2;
+  ctx.fillStyle = '#0f172a';
+  for (let i = 0; i < chairs; i++) {
+    const cx = -w / 2 + (w / chairs) * (i + 0.5);
+    ctx.fillRect(cx - 0.24, d / 2 - 1.15, 0.48, 0.45);
+  }
+  ctx.fillStyle = equip.borderColor;
+  ctx.beginPath();
+  ctx.moveTo(0, d / 2 + 0.5);
+  ctx.lineTo(-0.25, d / 2 + 0.15);
+  ctx.lineTo(0.25, d / 2 + 0.15);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function drawForwardArrow(
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -2020,6 +2211,27 @@ function drawItemLabels(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(badgeText, 0, baseY + 0.05);
+  }
+
+  // 2. Elevation tag for raised items (the top-down map can't show height otherwise)
+  const elev = item.elevation ?? 0;
+  if (elev > 0.05) {
+    const text = `\u2191 ${Number(elev.toFixed(1))} m`;
+    ctx.font = 'bold 0.6px "JetBrains Mono", monospace';
+    const w = ctx.measureText(text).width + 0.5;
+    const h = 0.8;
+    const y = baseY + (item.sequenceOrder !== null ? -1.05 : 0);
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 0.05;
+    ctx.beginPath();
+    ctx.roundRect(-w / 2, y - h / 2, w, h, 0.2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#7dd3fc';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 0, y + 0.03);
   }
 
   ctx.restore();

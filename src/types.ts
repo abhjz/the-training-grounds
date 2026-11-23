@@ -6,7 +6,39 @@ export type EquipmentVisualType =
   | 'vertical_quad'
   | 'flag_pole'
   | 'cube_gate'
-  | 'double_cube';
+  | 'double_cube'
+  | 'round_gate'
+  | 'container'
+  | 'launch_pad'
+  | 'pilot_pit'
+  // Site pieces (src/constants/siteEquipment.ts)
+  | 'turf_pitch'
+  | 'sand_pit'
+  | 'asphalt'
+  | 'gravel_road'
+  | 'dirt_lane'
+  | 'dirt_curve'
+  | 'dirt_area'
+  | 'scrub_patch'
+  | 'berm'
+  | 'tree_big'
+  | 'tree_small'
+  | 'palm'
+  | 'building'
+  | 'cabin'
+  | 'shade_shed'
+  | 'open_shelter'
+  | 'gazebo'
+  | 'floodlight'
+  | 'light_pole'
+  | 'mast'
+  | 'wreck'
+  | 'double_arch'
+  | 'tyre'
+  | 'cable_drum'
+  | 'jeep'
+  | 'flagpole'
+  | 'grass';
 
 export interface EquipmentDef {
   id: string;
@@ -26,6 +58,10 @@ export interface EquipmentDef {
   isCustom?: boolean;
   /** Height of one frame/tier, or total height for a flag (metres). Defaults per shape when missing. */
   tierHeight?: number;
+  /** 'site' = ground surfaces, terrain, trees, buildings (listed under "Site & scenery") */
+  category?: 'site';
+  /** Each placed copy can have its own width and length (pitches, roads, buildings...) */
+  resizable?: boolean;
 }
 
 export interface TrackPoint {
@@ -54,6 +90,16 @@ export interface PlacedItem {
   maneuverOffsetY?: number; // custom vertical offset from gate center (meters)
   maneuverRotation?: number; // custom rotation angle of maneuver badge in degrees (0 - 360)
   locked?: boolean; // locked pieces can't be moved, rotated or deleted until unlocked
+  elevation?: number; // height of the item's base above the ground in metres (0 to MAX_ITEM_ELEVATION)
+  /** Logos as small image data URLs: 'flag' for a flag's banner; 'left', 'right', 'roof' for a container. */
+  logos?: Partial<Record<'flag' | 'left' | 'right' | 'roof' | 'leftIn' | 'rightIn' | 'ceiling', string>>;
+  /** LED neon lights on the item's frame: the light colour (hex), or missing when off */
+  led?: string;
+  /** Resizable pieces only: this copy's own width and length in metres */
+  sizeW?: number;
+  sizeD?: number;
+  /** Resizable pieces only: this copy's own height in metres */
+  sizeH?: number;
 }
 
 export interface ManeuverOption {
@@ -112,6 +158,44 @@ export interface SavedTrack {
   drawnPath?: TrackPoint[];
   /** Field the track was designed on (older saves don't have it) */
   ground?: TrackGround;
+  /** What's painted across the ground (older saves don't have it: the ground name) */
+  groundMark?: GroundMark;
+}
+
+/** What's painted across the middle of the ground. */
+export interface GroundMark {
+  mode: 'name' | 'text' | 'logo' | 'none';
+  /** Your own text, e.g. the track name (mode 'text') */
+  text?: string;
+  /** Logo image as a data URL (mode 'logo') */
+  logo?: string;
+  /** 0.05 to 1. Missing = the look's normal faint watermark for text, 0.6 for a logo. */
+  opacity?: number;
+  /** Centre of the mark as a share of the field (0..1 across, 0..1 down). Missing = the middle. */
+  x?: number;
+  y?: number;
+  /** Size relative to the normal (1 = spans most of the field). 0.1 to 2. */
+  scale?: number;
+  /** Turn in degrees, clockwise on the map. */
+  rotation?: number;
+}
+
+export const DEFAULT_GROUND_MARK: GroundMark = { mode: 'name' };
+
+/** Reads a ground mark from a file or storage; anything unusable falls back to the ground name. */
+export function parseGroundMark(v: any): GroundMark {
+  if (!v || typeof v !== 'object' || !['name', 'text', 'logo', 'none'].includes(v.mode)) return DEFAULT_GROUND_MARK;
+  const m: GroundMark = { mode: v.mode };
+  if (typeof v.text === 'string') m.text = v.text.slice(0, 60);
+  if (typeof v.logo === 'string' && v.logo.startsWith('data:image/')) m.logo = v.logo;
+  if (typeof v.opacity === 'number' && Number.isFinite(v.opacity)) m.opacity = Math.min(1, Math.max(0.05, v.opacity));
+  const num = (n: any, lo: number, hi: number) => (typeof n === 'number' && Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : undefined);
+  m.x = num(v.x, 0, 1);
+  m.y = num(v.y, 0, 1);
+  m.scale = num(v.scale, 0.1, 2);
+  m.rotation = num(v.rotation, -360, 360);
+  for (const k of ['x', 'y', 'scale', 'rotation'] as const) if (m[k] === undefined) delete m[k];
+  return m;
 }
 
 export interface TrackGround {

@@ -10,7 +10,7 @@ import { gateManeuverPoints } from './trackMath';
 
 export const DEFAULT_LINE_ALT = 1.2;
 export const MIN_LINE_ALT = 0.3;
-export const MAX_LINE_ALT = 8;
+export const MAX_LINE_ALT = 15;
 const CLOSE_EPS = 0.3; // metres: first and last point this close means the line is a loop
 const SAMPLE_SPACING = 0.5; // metres between points of the rebuilt line
 

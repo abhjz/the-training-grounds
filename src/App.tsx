@@ -1,13 +1,17 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo, Suspense, lazy } from 'react';
-import { Box, Compass, Map as MapIcon, Menu } from 'lucide-react';
+import { Box, Compass, Map as MapIcon, Maximize2, Menu, Minimize2, PanelLeftOpen } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { TrackHUD } from './components/TrackHUD';
 import { ItemInspector } from './components/ItemInspector';
 import { SaveLoadModal } from './components/SaveLoadModal';
-import { PlacedItem, SavedTrack, TrackPoint } from './types';
+import { DEFAULT_GROUND_MARK, GroundMark, PlacedItem, SavedTrack, TrackPoint } from './types';
+import { GroundMarkPanel } from './components/GroundMarkPanel';
+import { useGroundPaint } from './hooks/useGroundPaint';
+import { setActiveGroundPaint } from './utils/watermark';
 import {
   EQUIPMENT_INVENTORY,
   EQUIPMENT_MAP,
+  byLayer,
   FIELD_HEIGHT_M,
   FIELD_WIDTH_M,
   setActiveGround,
@@ -46,6 +50,7 @@ import { PALETTES } from './theme/palettes';
 import { COASTAL_SUNSET } from './theme/coastalSunset';
 import {
   DEFAULT_GROUND,
+  builtInLayout,
   Ground,
   loadActiveGroundId,
   loadGrounds,
@@ -63,6 +68,23 @@ const Field3D = lazy(() => import('./components/Field3D'));
 interface HistorySnapshot {
   items: PlacedItem[];
   drawnPath: TrackPoint[];
+}
+
+/** A built-in ground's layout in autosave form (null for grounds without one). */
+function builtInAutosave(groundId: string): AutosaveState | null {
+  const t = builtInLayout(groundId);
+  if (!t) return null;
+  return {
+    items: t.items,
+    drawnPath: t.drawnPath ?? [],
+    closeLoop: t.closeLoop,
+    closeDrawnLoop: false,
+    droneSpeedKmH: t.droneSpeedKmH,
+    snapGrid: 0.5,
+    showDistances: true,
+    drawnPathColor: '#ef4444',
+    groundMark: t.groundMark,
+  };
 }
 
 export default function App() {
@@ -84,6 +106,53 @@ export default function App() {
   const renderThemeKey = `${look}:${themeId}`;
   // Phone layout: inventory sidebar is a slide-in drawer
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  // Full screen: only the map shows (and the browser / app goes full screen when it can)
+  const [fullMap, setFullMap] = useState(false);
+  const fullMapRef = useRef(false);
+  fullMapRef.current = fullMap;
+  const toggleFullMap = useCallback(() => {
+    const next = !fullMapRef.current;
+    setFullMap(next);
+    try {
+      if (next && !document.fullscreenElement) void document.documentElement.requestFullscreen?.().catch(() => {});
+      if (!next && document.fullscreenElement) void document.exitFullscreen?.().catch(() => {});
+    } catch {
+      /* full screen not allowed here: hiding the controls still works */
+    }
+  }, []);
+  // Leaving the browser's full screen (Esc) brings the controls back too; F toggles
+  useEffect(() => {
+    const onFs = () => {
+      if (!document.fullscreenElement) setFullMap(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key === 'f' || e.key === 'F') toggleFullMap();
+      else if (e.key === 'Escape') setFullMap(false);
+    };
+    document.addEventListener('fullscreenchange', onFs);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFs);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [toggleFullMap]);
+  // Computer screens: hide the sidebar so the field fills the window (remembered)
+  const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('tg.sidebarHidden') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('tg.sidebarHidden', sidebarHidden ? '1' : '0');
+    } catch {
+      /* private mode: just don't remember it */
+    }
+  }, [sidebarHidden]);
   // Grounds (venues) — each has its own size and autosaved layout
   const [grounds, setGrounds] = useState<Ground[]>(() => loadGrounds());
   const [activeGroundId, setActiveGroundId] = useState<string>(() => loadActiveGroundId(grounds));
@@ -92,7 +161,8 @@ export default function App() {
   setActiveGround(activeGround);
 
   // Restore the last autosaved layout once; the original ground falls back to the Championship preset
-  const [restored] = useState<AutosaveState | null>(() => loadAutosave(activeGroundId));
+  // The saved layout for this ground, or a built-in ground's own layout (Main UAE FPV) on first open
+  const [restored] = useState<AutosaveState | null>(() => loadAutosave(activeGroundId) ?? builtInAutosave(activeGroundId));
 
   // Placed equipment items on the field
   const [items, setItems] = useState<PlacedItem[]>(
@@ -123,6 +193,11 @@ export default function App() {
   const [isDrawingStroke, setIsDrawingStroke] = useState<boolean>(false);
   const [showDistances, setShowDistances] = useState<boolean>(restored?.showDistances ?? true);
   const [drawnPathColor, setDrawnPathColor] = useState<string>(restored?.drawnPathColor ?? '#ef4444');
+  // What's painted across the ground: the ground name, your text, a logo or nothing
+  const [groundMark, setGroundMark] = useState<GroundMark>(restored?.groundMark ?? DEFAULT_GROUND_MARK);
+  const [isGroundMarkOpen, setIsGroundMarkOpen] = useState(false);
+  const groundPaint = useGroundPaint(groundMark, activeGround.name);
+  setActiveGroundPaint(groundPaint); // the 2D map and PNG export read it while drawing
   const drawnPathColorRef = useRef(drawnPathColor);
   drawnPathColorRef.current = drawnPathColor;
   const [viewMode, setViewMode] = useState<'2d' | '3d'>(() => {
@@ -199,8 +274,8 @@ export default function App() {
 
   // Autosave the working layout (debounced so drags don't write on every mouse move)
   const autosaveState: AutosaveState = useMemo(
-    () => ({ items, drawnPath, closeLoop, closeDrawnLoop, droneSpeedKmH, snapGrid, showDistances, drawnPathColor }),
-    [items, drawnPath, closeLoop, closeDrawnLoop, droneSpeedKmH, snapGrid, showDistances, drawnPathColor]
+    () => ({ items, drawnPath, closeLoop, closeDrawnLoop, droneSpeedKmH, snapGrid, showDistances, drawnPathColor, groundMark }),
+    [items, drawnPath, closeLoop, closeDrawnLoop, droneSpeedKmH, snapGrid, showDistances, drawnPathColor, groundMark]
   );
   const latestAutosaveRef = useRef(autosaveState);
   latestAutosaveRef.current = autosaveState;
@@ -229,7 +304,7 @@ export default function App() {
       // Save the ground we're leaving right away (the debounced save may not have run yet)
       writeAutosave(latestAutosaveRef.current, activeGroundIdRef.current);
       setActiveGround(ground);
-      const saved = loadAutosave(ground.id);
+      const saved = loadAutosave(ground.id) ?? builtInAutosave(ground.id);
       const nextItems = saved?.items ?? (ground.id === DEFAULT_GROUND.id ? PRESET_TRACKS[0].items : []);
       const nextPath = saved?.drawnPath ?? [];
       itemsRef.current = nextItems;
@@ -242,6 +317,7 @@ export default function App() {
       setSnapGrid(saved?.snapGrid ?? 0.5);
       setShowDistances(saved?.showDistances ?? true);
       setDrawnPathColor(saved?.drawnPathColor ?? '#ef4444');
+      setGroundMark(saved?.groundMark ?? DEFAULT_GROUND_MARK);
       // Undo history and selections belong to the ground we left
       setUndoStack([]);
       setRedoStack([]);
@@ -533,6 +609,12 @@ export default function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, [fitFieldToScreen]);
 
+  // Re-fit the 2D map once the sidebar has gone or come back (the field's space changed)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => fitFieldToScreen());
+    return () => cancelAnimationFrame(id);
+  }, [sidebarHidden, fullMap, fitFieldToScreen]);
+
   // Re-fit the 2D map when the ground (and so the field size) changes
   useEffect(() => {
     fitFieldToScreen();
@@ -590,6 +672,7 @@ export default function App() {
     ctx.restore();
   }, [
     activeGroundId,
+    groundPaint,
     viewport,
     items,
     selectedItemId,
@@ -1058,6 +1141,7 @@ export default function App() {
       setDroneSpeedKmH(track.droneSpeedKmH);
       setDrawnPath(track.drawnPath || []);
       drawnPathRef.current = track.drawnPath || [];
+      setGroundMark(track.groundMark ?? DEFAULT_GROUND_MARK);
       setActiveStroke([]);
       activeStrokeRef.current = [];
       setSelectedItemId(null);
@@ -1186,15 +1270,19 @@ export default function App() {
     const centerX = FIELD_WIDTH_M / 2;
     const centerY = FIELD_HEIGHT_M / 2;
 
-    const sorted = [...items].sort((a, b) => {
-      const angleA = Math.atan2(a.y - centerY, a.x - centerX);
-      const angleB = Math.atan2(b.y - centerY, b.x - centerX);
-      return angleA - angleB;
-    });
+    // Only pieces you fly through get numbers; the launch pad and pilot pit stay unnumbered
+    const sorted = items
+      .filter((item) => EQUIPMENT_MAP.get(item.equipId)?.isGate !== false)
+      .sort((a, b) => {
+        const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+        const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+        return angleA - angleB;
+      });
+    const order = new Map(sorted.map((item, idx) => [item.id, idx + 1]));
 
-    const next = sorted.map((item, idx) => ({
+    const next = items.map((item) => ({
       ...item,
-      sequenceOrder: idx + 1,
+      sequenceOrder: order.get(item.id) ?? null,
     }));
     itemsRef.current = next;
     setItems(next);
@@ -1389,9 +1477,10 @@ export default function App() {
       }
     }
 
-    // 4. Hit test all placed items (reverse order to pick top-most item)
-    for (let i = items.length - 1; i >= 0; i--) {
-      const item = items[i];
+    // 4. Hit test all placed items (reverse drawing order to pick the top-most; ground surfaces last)
+    const pickOrder = byLayer(items);
+    for (let i = pickOrder.length - 1; i >= 0; i--) {
+      const item = pickOrder[i];
       if (hitTestItem(world.x, world.y, item)) {
         setSelectedItemId(item.id);
         if (item.locked) return; // select only: locked pieces stay put
@@ -1580,9 +1669,10 @@ export default function App() {
 
     let hoveredId: string | null = null;
     if (!hoveredGateRotate && !hoveredRotateId && !hoveredManeuver) {
-      for (let i = items.length - 1; i >= 0; i--) {
-        if (hitTestItem(world.x, world.y, items[i])) {
-          hoveredId = items[i].id;
+      const pickOrder = byLayer(items);
+      for (let i = pickOrder.length - 1; i >= 0; i--) {
+        if (hitTestItem(world.x, world.y, pickOrder[i])) {
+          hoveredId = pickOrder[i].id;
           break;
         }
       }
@@ -1960,7 +2050,7 @@ export default function App() {
   };
 
   return (
-    <div id="app-shell" className="relative flex w-screen overflow-hidden bg-tg-panel text-slate-100 select-none">
+    <div id="app-shell" className={`relative flex w-screen overflow-hidden bg-tg-panel text-slate-100 select-none ${fullMap ? 'tg-fullmap' : ''}`}>
       {/* Phone layout: dim the field behind the open inventory drawer */}
       {isMobilePanelOpen && (
         <div
@@ -2008,10 +2098,19 @@ export default function App() {
         defaultPlacementYaw={defaultPlacementYaw}
         onChangeDefaultPlacementYaw={setDefaultPlacementYaw}
         mobileOpen={isMobilePanelOpen}
+        desktopHidden={sidebarHidden}
+        onHideDesktop={() => setSidebarHidden(true)}
         onCloseMobile={() => setIsMobilePanelOpen(false)}
-        themeName={look === 'animated' ? 'Animated look' : look === 'sunset' ? COASTAL_SUNSET.look.name : look === 'showroom' ? 'Showroom' : look === 'trading' ? 'Trading Floor' : PALETTES.find((p) => p.id === themeId)?.name ?? 'Classic Night'}
+        themeName={look === 'animated' ? 'Animated look' : look === 'sunset' ? COASTAL_SUNSET.look.name : look === 'showroom' ? 'Showroom' : look === 'trading' ? 'Trading Floor' : look === 'desert' ? 'Desert Site' : PALETTES.find((p) => p.id === themeId)?.name ?? 'Classic Night'}
         onOpenThemePicker={() => {
           setIsThemePickerOpen(true);
+          setIsMobilePanelOpen(false);
+        }}
+        groundMarkLabel={
+          groundMark.mode === 'logo' ? 'Logo' : groundMark.mode === 'none' ? 'Nothing' : groundMark.mode === 'text' ? groundMark.text?.trim() || 'Text' : 'Ground name'
+        }
+        onOpenGroundMark={() => {
+          setIsGroundMarkOpen(true);
           setIsMobilePanelOpen(false);
         }}
       />
@@ -2028,6 +2127,19 @@ export default function App() {
           }
         }}
       >
+        {/* Computer screens: bring the hidden sidebar back (a slim tab on the left edge) */}
+        {sidebarHidden && (
+          <button
+            type="button"
+            onClick={() => setSidebarHidden(false)}
+            className="compact:hidden absolute left-0 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1 py-3 px-1.5 rounded-r-xl bg-tg-panel/95 border border-l-0 border-slate-700 text-sky-300 shadow-xl hover:bg-slate-800"
+            aria-label="Show panel"
+            title="Show the equipment panel"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        )}
+
         {/* Phone layout: open the inventory drawer */}
         <button
           type="button"
@@ -2192,7 +2304,7 @@ export default function App() {
 
         {/* 3D field view (overlays the 2D map; HUD and inspector stay on top) */}
         {viewMode === '3d' && (
-          <div className="absolute inset-0 z-[5] bg-tg-deep">
+          <div className="tg-map3d absolute inset-0 z-[5] bg-tg-deep">
             <Suspense
               fallback={
                 <div className="absolute inset-0 flex items-center justify-center bg-tg-deep text-slate-400 font-mono text-xs">
@@ -2203,6 +2315,7 @@ export default function App() {
               <Field3D
                 key={activeGroundId}
                 groundName={activeGround.name}
+                groundPaint={groundPaint}
                 themeId={renderThemeKey}
                 items={items}
                 drawnPath={drawnPath}
@@ -2229,6 +2342,22 @@ export default function App() {
           </div>
         )}
 
+        {/* Full screen: one button hides everything but the map, and brings it all back */}
+        <button
+          type="button"
+          onClick={toggleFullMap}
+          className={`tg-fullmap-btn absolute top-3 right-4 z-40 w-[52px] h-[52px] flex items-center justify-center rounded-xl border backdrop-blur-md shadow-xl transition compact:top-2 compact:right-2 compact:w-10 compact:h-10 ${
+            fullMap
+              ? 'bg-tg-panel/80 border-slate-700 text-slate-200 hover:text-white hover:border-sky-500/60'
+              : 'bg-tg-panel/90 border-sky-500/50 text-sky-300 hover:text-white hover:bg-sky-500/20'
+          }`}
+          aria-pressed={fullMap}
+          aria-label={fullMap ? 'Exit full screen' : 'Full screen'}
+          title={fullMap ? 'Exit full screen (F or Esc)' : 'Full screen: show only the map (F)'}
+        >
+          {fullMap ? <Minimize2 className="w-5 h-5" /> : <Maximize2 className="w-5 h-5" />}
+        </button>
+
         {/* 2D / 3D view switch */}
         <div className="absolute bottom-16 left-4 z-20 flex items-center bg-tg-panel/95 border border-slate-700 rounded-xl p-1 shadow-2xl font-mono text-[11px] compact:bottom-2 compact:left-2">
           {(['2d', '3d'] as const).map((mode) => (
@@ -2249,6 +2378,17 @@ export default function App() {
         </div>
       </main>
 
+      {/* What's painted across the ground */}
+      <GroundMarkPanel
+        isOpen={isGroundMarkOpen}
+        mark={groundMark}
+        groundName={activeGround.name}
+        groundWidth={activeGround.width}
+        groundHeight={activeGround.height}
+        onChange={setGroundMark}
+        onClose={() => setIsGroundMarkOpen(false)}
+      />
+
       {/* Colour theme picker */}
       <ThemePicker
         isOpen={isThemePickerOpen}
@@ -2268,6 +2408,7 @@ export default function App() {
         droneSpeedKmH={droneSpeedKmH}
         drawnPath={drawnPath}
         ground={activeGround}
+        groundMark={groundMark}
         onLoadTrack={loadTrackOnItsGround}
         onExport3D={handleExport3D}
         export3DStatus={export3DStatus}

@@ -23,6 +23,7 @@ import {
   Navigation,
   SlidersHorizontal,
   X,
+  ChevronUp,
 } from 'lucide-react';
 import { TrackMetrics } from '../types';
 import { FIELD_HEIGHT_M, FIELD_WIDTH_M } from '../constants/equipment';
@@ -111,13 +112,34 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
   const [hudRotateMode, setHudRotateMode] = React.useState<'heading' | 'orbit'>('heading');
   // Phone layout: tool buttons fold away behind a toggle so the field stays visible
   const [showMobileTools, setShowMobileTools] = React.useState(false);
+  // Computer screens: the tools bar can be folded away for a cleaner view (remembered)
+  const [toolsHidden, setToolsHidden] = React.useState(() => {
+    try {
+      return localStorage.getItem('tg.toolsHidden') === '1';
+    } catch {
+      return false;
+    }
+  });
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('tg.toolsHidden', toolsHidden ? '1' : '0');
+    } catch {
+      /* private mode */
+    }
+  }, [toolsHidden]);
+  // The speed slider moves in 10 km/h steps; older tracks saved at 25 or 85 km/h snap to the nearest step
+  // so the knob and the number always agree
+  React.useEffect(() => {
+    const snapped = Math.min(120, Math.max(0, Math.round(droneSpeedKmH / 10) * 10));
+    if (snapped !== droneSpeedKmH) onChangeDroneSpeed(snapped);
+  }, [droneSpeedKmH, onChangeDroneSpeed]);
 
   return (
     <>
       {/* Top Telemetry Header Bar */}
       <div
         id="track-hud-top"
-        className="absolute top-3 left-4 right-4 z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none compact:top-2 compact:left-14 compact:right-2 compact:gap-2 compact:flex-wrap compact:items-start"
+        className="absolute top-3 left-4 right-[84px] z-10 flex flex-wrap items-center justify-between gap-3 pointer-events-none compact:top-2 compact:left-14 compact:right-14 compact:gap-2 compact:flex-wrap compact:items-start"
       >
         {/* Left Telemetry Cluster */}
         <div className="flex items-center gap-2 pointer-events-auto bg-tg-panel/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-800 shadow-xl font-mono compact:flex-1 compact:min-w-0 compact:h-10 compact:gap-0 compact:px-2 compact:py-0 compact:overflow-x-auto no-scrollbar">
@@ -156,7 +178,7 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
               Est. Lap Time
             </div>
             <div className="text-base compact:text-sm compact:leading-tight font-bold text-emerald-400">
-              {metrics.estimatedLapTime.toFixed(1)} <span className="text-xs text-slate-400">s</span>
+              {droneSpeedKmH > 0 ? metrics.estimatedLapTime.toFixed(1) : '—'} <span className="text-xs text-slate-400">s</span>
             </div>
           </div>
 
@@ -165,18 +187,31 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
             <div className="text-[10px] compact:text-[9px] text-slate-400 uppercase tracking-wider whitespace-nowrap">
               Speed
             </div>
-            <select
-              id="select-drone-speed"
-              value={droneSpeedKmH}
-              onChange={(e) => onChangeDroneSpeed(Number(e.target.value))}
-              className="bg-slate-900 border border-slate-700 text-sky-300 text-xs rounded px-1.5 py-0.5 font-mono focus:outline-none focus:border-sky-500"
-            >
-              <option value={25}>25 km/h (Training)</option>
-              <option value={60}>60 km/h (Slow)</option>
-              <option value={85}>85 km/h (Pro)</option>
-              <option value={100}>100 km/h (Fast)</option>
-              <option value={120}>120 km/h (Rocket)</option>
-            </select>
+            {/* 0 to 120 km/h in steps of 10, with a tick at every step */}
+            <div className="flex items-center gap-2 h-[22px]">
+              <input
+                id="select-drone-speed"
+                type="range"
+                min={0}
+                max={120}
+                step={10}
+                list="drone-speed-ticks"
+                value={droneSpeedKmH}
+                onChange={(e) => onChangeDroneSpeed(Number(e.target.value))}
+                aria-label="Drone speed"
+                aria-valuetext={`${droneSpeedKmH} km/h`}
+                title="Drone speed: 0 to 120 km/h (arrow keys move 10 at a time)"
+                className="w-32 compact:w-24 accent-sky-400 cursor-pointer"
+              />
+              <datalist id="drone-speed-ticks">
+                {Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={i * 10} />
+                ))}
+              </datalist>
+              <span className="w-[4.5rem] text-sky-300 text-xs font-mono font-bold tabular-nums whitespace-nowrap">
+                {droneSpeedKmH} <span className="text-slate-400 font-normal">km/h</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -194,10 +229,23 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
           {showMobileTools ? <X className="w-5 h-5" /> : <SlidersHorizontal className="w-5 h-5" />}
         </button>
 
+        {/* Computer screens: the tools bar is folded away; this brings it back */}
+        {toolsHidden && (
+          <button
+            type="button"
+            onClick={() => setToolsHidden(false)}
+            className="compact:hidden pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-xl bg-tg-panel/90 backdrop-blur-md border border-slate-800 shadow-xl font-mono text-xs text-slate-300 hover:text-sky-300 hover:border-sky-500/60"
+            aria-label="Show tools"
+            title="Show the tools bar (draw line, loop, distances, snap, yaw, undo, zoom)"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" /> Tools
+          </button>
+        )}
+
         {/* Right Controls Cluster */}
         <div className={`flex flex-wrap max-w-full items-center gap-2 pointer-events-auto bg-tg-panel/90 backdrop-blur-md px-2.5 py-1.5 rounded-xl border border-slate-800 shadow-xl font-mono text-xs ${
           showMobileTools ? 'compact:basis-full compact:gap-1.5 compact:px-1.5' : 'compact:hidden'
-        }`}>
+        } ${toolsHidden ? 'tg-desktop-hidden' : ''}`}>
           {/* Draw Flight Path Toggle Button */}
           <button
             id="btn-toggle-draw-mode"
@@ -499,6 +547,17 @@ export const TrackHUD: React.FC<TrackHUDProps> = ({
             title="Keyboard shortcuts & controls"
           >
             <HelpCircle className="w-3.5 h-3.5" />
+          </button>
+
+          {/* Fold the bar away (computer screens; phones use the tools button) */}
+          <button
+            type="button"
+            onClick={() => setToolsHidden(true)}
+            className="compact:hidden p-1.5 text-slate-400 hover:text-slate-100 bg-slate-900 border border-slate-800 rounded-lg transition"
+            aria-label="Hide tools"
+            title="Hide the tools bar"
+          >
+            <ChevronUp className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>

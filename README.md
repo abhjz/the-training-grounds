@@ -10,7 +10,9 @@
 
 **Design an FPV drone racing track, draw the race line, and fly through it in 3D before a single gate leaves the van.**
 
-Place real gates and flags on a field drawn to scale, see the distance between every gate, get a lap-time estimate, and share the finished layout with your club as one small file. It works on your phone at the field and on your laptop at home.
+Place real gates and flags on a field drawn to scale, see the distance between every gate, get a lap-time estimate, and share the finished layout with your club as one small file. Model the whole flying site too: turf, sand, dirt track, trees, buildings and obstacles. Then fly it from five camera views and export the lap as a smooth video. It works on your phone at the field and on your laptop at home.
+
+The app opens on **Main UAE FPV**, the UAE FPV Community's main site, built from a drone GPS survey.
 
 Free for pilots & clubs · Android · Windows · macOS · works offline
 
@@ -35,7 +37,13 @@ All versions and release notes: **[Releases](https://github.com/abhjz/the-traini
 
 ## 📸 A look inside
 
-<p align="center"><img src="docs/images/desktop-3d.jpg" alt="3D view of a nine-gate track" width="100%"></p>
+<p align="center"><img src="docs/images/site-main-uae-3d.jpg" alt="Main UAE FPV site in 3D, Desert Site look" width="100%"></p>
+
+| 🏜️ The whole site — track, obstacles, trees, buildings | 🌳 Environment assets — trees, grass, ground, buildings |
+|:--:|:--:|
+| <img src="docs/images/site-track-zone.jpg" alt="The desert track zone of Main UAE FPV"> | <img src="docs/images/environment-assets.jpg" alt="Environment Assets list" width="260"> |
+| 💡 **LED lights** — neon on gates, buildings, trees and poles | 🎯 **Nine-gate track** in the Normal look |
+| <img src="docs/images/led-lights.jpg" alt="LED lights on gates and environment assets"> | <img src="docs/images/desktop-3d.jpg" alt="3D view of a nine-gate track"> |
 
 | 🗺️ 2D editor — exact metres, every gap measured | 🎥 FPV fly-through — see it from the quad |
 |:--:|:--:|
@@ -50,10 +58,11 @@ All versions and release notes: **[Releases](https://github.com/abhjz/the-traini
 | <img src="docs/images/phone-3d.jpg" width="190" alt="Phone 3D view"> | <img src="docs/images/phone-drawer.jpg" width="190" alt="Phone equipment drawer"> | <img src="docs/images/phone-2d-tools.jpg" width="190" alt="Phone 2D with tools"> | <img src="docs/images/phone-landscape.jpg" width="330" alt="Phone landscape"> |
 
 
-### 🌊 Five looks
+### 🌊 Six looks
 
 Open **Theme** in the sidebar and pick a look. Your choice is remembered.
 
+- **Desert Site** (the default). Real desert colours sampled from drone photos: sand, olive scrub, turf green, asphalt grey and a hazy morning sky. In 3D the desert runs to the horizon with scattered scrub, a far tree line and low white buildings.
 - **Normal look.** The flat, technical editor, in any of the colour themes below.
 - **Animated look.** Rounded, game-style buttons with an amber glow. The field is a mossy wooden deck; in 3D it sits on the roof of a drowned tower in a sunken city, with light shafts, kelp, coral, fish, jellyfish and rising bubbles.
 - **Coastal Sunset.** A tropical ocean drive at golden hour: pastel art deco hotels with neon signs, palms, street lamps, cruising cars, speedboats, a helicopter and glittering water under a pink and gold sky.
@@ -83,28 +92,39 @@ Each colour theme follows a 60 · 30 · 10 palette: 60% background, 30% text, an
 ## ✨ Features
 
 ### 🗺️ Build the track
-- **A field drawn to scale.** The default is 57 × 43 m with a 3 m safety fence, and you can add your own grounds from 15 m up to 300 m. Each ground keeps its own layout.
-- **Real equipment.** Pick from 1.5 m single gates, arch gates with a side pole, 2 m cube gates, double cubes, vertical triple and quad ladders, and 3 m flag poles. Stock is unlimited.
+- **A field drawn to scale.** Start on **Main UAE FPV** (200 × 260 m) or the classic 57 × 43 m field with a 3 m safety fence, and add your own grounds from 15 m up to 300 m. Each ground keeps its own layout.
+- **Racing assets.** Pick from 1.5 m single gates, arch gates with a side pole, round hoops, 2 m cube gates, double cubes, vertical triple and quad ladders, 3 m flag poles, 20 ft containers, a launch pad and a pilot pit. Stock is unlimited.
+- **Environment assets.** Switch the list to **Environment Assets** for trees, palms, grass and desert scrub; turf pitches, sand pits, asphalt, gravel roads, dirt track pieces and berms; buildings, cabins, sheds, shelters and gazebos; floodlights, light poles, a lattice mast and flagpoles; containers, wrecks, tyres and cable drums.
+- **Any size.** Every piece can be resized: width, length and height, or crown size for trees and diameter for hoops. The race line follows a bigger gate.
+- **Raise anything.** Lift a piece up to 12 m off the ground, for a gate on a stack or a roof.
+- **LED lights.** Switch on neon lights in eight colours: frames light up on gates, roof edges on buildings, fairy lights in trees, tubes up poles.
+- **Logos.** Put a logo on a flag, on each wall of a container (inside and out) and on its roof, or a national flag on a flagpole.
 - **Your own equipment.** Use **＋ New item** to add any gate or obstacle you own with its real size.
 - **Placing pieces.** Tap the field to place, drag to move, and snap to 0.5 m or 1 m.
 - **Rotating pieces.** Yaw in 15° steps, pitch and roll, mirror, and set the angle new pieces spawn at. You can rotate every piece at once, either in place or around the field.
 - **Locking.** Lock a piece so it can't be moved by accident.
+- **One control at a time.** Selecting a piece opens a small panel with a **Control** list: position, size, elevation, heading, tilt, LED, logos, maneuver or waypoint order.
+- **Ground marking.** Paint the ground name, your own text or a logo anywhere on the field, at any size and angle.
 - **Ready-made layouts.** Start from a pro preset: Championship Qualifier, High-Speed Sweeper & Slalom, or Precision Cube & Technical Loop.
 
 ### 🛤️ Plan the line
 - **Gate order.** Number the gates and the path joins them in sequence, with the distance of every leg shown.
 - **Draw the line yourself.** Use **Draw Track Line** to trace your own line with your finger or mouse, then smooth it or build a curve through the gates automatically.
 - **Circuit or open track.** Loop back to the start, or finish at the last gate.
-- **Maneuvers on every gate.** Mark corkscrews, slaloms, dives, Split-S, ladders up and down, or orbiting a pole and exiting.
-- **Race line editor in 3D.** Drag points, **Shift + drag** to change height, and click a flag or gate to send the line around or through it. Gates stay fixed while you edit, so a stray tap can't move them.
+- **Maneuvers on every gate.** Mark corkscrews, slaloms, dives, Split-S, ladders up and down, or orbiting a pole and exiting. The line flies them at real scale.
+- **Race line editor in 3D.** Drag points, **Shift + drag** to change height (up to 15 m), and click a flag or gate to send the line around or through it. Gates stay fixed while you edit, so a stray tap can't move them.
 
 ### ⏱️ Know the numbers
 - **Live figures.** Total length, gate count, longest straight and shortest gap update as you work.
-- **Lap-time estimate.** Choose a speed: **25** (Training), **60**, **85**, **100** or **120 km/h**.
+- **Lap-time estimate.** Set the speed on a slider from **0 to 120 km/h** in steps of 10.
 
 ### 🎥 See it before you build it
 - **3D field.** Orbit around the layout with gates at their real heights.
-- **FPV fly-through.** Ride the line at your chosen speed, from the quad's point of view.
+- **Fly-through in five views.** Ride the line as **FPV** (banking into turns), **Chase**, **Above**, **Side** or **Spectator**. Press **V** to switch.
+- **FPV lens.** Set the camera from a normal lens to a 150° wide angle, and zoom any view in or out with the wheel, a pinch or **+ / −**.
+- **Export video.** Export one lap as a smooth 60 fps MP4 (30 fps on Android), in the view, lens and speed you chose.
+- **Full screen.** One button (or **F**) hides everything but the map; press it again or **Esc** to bring it all back. The sidebar and tools bar can also be hidden on their own.
+- **Calm scenery.** Stop the 3D scenery moving (water, palms, birds) with one switch; the drone keeps flying.
 
 ### 💾 Save, share, export
 - **Saved tracks.** Name a track and save it. It **remembers the field size**, so it always reopens on the right ground.
@@ -113,9 +133,10 @@ Each colour theme follows a 60 · 30 · 10 palette: 60% background, 30% text, an
 - **3D model (.glb).** The field, gates and race line, which open in Blender and any glTF viewer.
 - **3D picture (.png).** The 3D view from your current camera angle.
 - **Undo / redo and autosave.** Your work is kept even if you close the app.
+- **Safe delete.** Deleting a saved track asks you to type **DELETE** first.
 
 ### 🎨 Make it yours
-- **Five looks.** Normal, Showroom (white and minimal), Trading Floor (near-black and yellow), and two animated ones with their own 3D scenery: a sunken city and a coastal sunset.
+- **Six looks.** Desert Site (the default), Normal, Showroom (white and minimal), Trading Floor (near-black and yellow), and two animated ones with their own 3D scenery: a sunken city and a coastal sunset.
 - **Eleven colour themes.** Classic Night, Sky Fresh, Petrol Gaming, Monochrome Brown, Teal Brand, Midnight Neon, Navy Idea, Mauve Loud, Olive Standout, Brick Hook and Coastal Sunset, with a live preview of each.
 - **Readable in every theme.** Every text colour is contrast-checked against its background, so labels stay legible even on bold palettes.
 - **The field stays dark.** The turf is tinted with the theme colour, so gates and the race line always stand out.

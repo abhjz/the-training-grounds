@@ -16,9 +16,13 @@ import {
   Move,
   Lock,
   Unlock,
+  ImagePlus,
+  Lightbulb,
+  ChevronDown,
 } from 'lucide-react';
-import { PlacedItem, MANEUVER_OPTIONS } from '../types';
-import { EQUIPMENT_MAP, FIELD_HEIGHT_M, FIELD_WIDTH_M } from '../constants/equipment';
+import { fileToLogo, LogoSlot } from '../utils/logos';
+import { EquipmentDef, PlacedItem, MANEUVER_OPTIONS } from '../types';
+import { EQUIPMENT_MAP, FIELD_HEIGHT_M, FIELD_WIDTH_M, LED_COLORS, MAX_ITEM_ELEVATION } from '../constants/equipment';
 import { isInsideFence } from '../utils/trackMath';
 
 interface ItemInspectorProps {
@@ -31,6 +35,131 @@ interface ItemInspectorProps {
   canDuplicate: boolean;
 }
 
+/** The control sets the panel can show, one at a time. */
+type InspectorSection = 'position' | 'size' | 'elevation' | 'heading' | 'tilt' | 'led' | 'logos' | 'maneuver' | 'route' | 'all';
+
+type SizeField = { key: 'sizeW' | 'sizeD' | 'sizeH' | 'round' | 'hoop'; label: string; def: number; step?: number; min?: number; max?: number; alsoD?: boolean };
+
+/** Which size fields make sense for a piece (a pole has a height but no useful width, a tree has a crown...). */
+function sizeFieldsFor(equip: EquipmentDef): SizeField[] {
+  const W: SizeField = { key: 'sizeW', label: 'Width', def: equip.width };
+  const L: SizeField = { key: 'sizeD', label: 'Length', def: equip.depth };
+  const H: SizeField = { key: 'sizeH', label: 'Height', def: equip.tierHeight ?? 2, max: 60 };
+  const tier = equip.tierHeight ?? (equip.visualType === 'cube_gate' || equip.visualType === 'double_cube' ? equip.width : 2);
+  switch (equip.visualType) {
+    // ---- racing assets
+    case 'single_gate_blue':
+    case 'single_gate_lightblue':
+      return [{ ...W, max: 20 }, { ...H, def: equip.tierHeight ?? 1.5, max: 20 }];
+    case 'vertical_double':
+    case 'vertical_triple':
+    case 'vertical_quad':
+      return [{ ...W, max: 20 }, { ...H, label: 'Tier height', def: tier, max: 10 }];
+    case 'flag_pole':
+      return [{ ...H, def: equip.tierHeight ?? 3, max: 15 }];
+    case 'cube_gate':
+      return [{ key: 'round', label: 'Size', def: equip.width, max: 20 }, { ...H, def: tier, max: 20 }];
+    case 'double_cube':
+      return [{ key: 'round', label: 'Size', def: equip.width, max: 20 }, { ...H, label: 'Tier height', def: tier, max: 10 }];
+    case 'round_gate':
+      return [{ key: 'hoop', label: 'Diameter', def: equip.tierHeight ?? equip.width, max: 12, step: 0.1 }];
+    case 'launch_pad':
+      return [{ ...W, max: 10, step: 0.1 }, { ...L, max: 10, step: 0.1 }];
+    // ---- environment assets
+    case 'asphalt':
+    case 'gravel_road':
+    case 'dirt_lane':
+    case 'dirt_area':
+    case 'grass':
+    case 'scrub_patch':
+      return [W, L];
+    case 'dirt_curve':
+      return [{ ...W, label: 'Track width' }, { ...L, label: 'Turn radius' }];
+    case 'turf_pitch':
+    case 'sand_pit':
+      return [W, L, { ...H, label: 'Fence height', max: 15 }];
+    case 'tree_big':
+    case 'tree_small':
+    case 'palm':
+      return [{ key: 'round', label: 'Crown size', def: equip.width, max: 40 }, H];
+    case 'floodlight':
+    case 'light_pole':
+    case 'flagpole':
+      return [H];
+    case 'mast':
+      return [{ key: 'round', label: 'Base width', def: equip.width, max: 12 }, { ...H, max: 120 }];
+    case 'tyre':
+      return [{ key: 'round', label: 'Diameter', def: equip.width, max: 4, step: 0.1 }];
+    case 'cable_drum':
+      return [{ key: 'round', label: 'Diameter', def: equip.width, max: 4, step: 0.1, alsoD: false }, { ...L, label: 'Thickness', max: 4, step: 0.1 }];
+    case 'double_arch':
+      return [W, H];
+    default:
+      return [W, L, H];
+  }
+}
+
+/** Upload / replace / remove one logo. */
+function LogoSlotRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string | undefined;
+  onChange: (logo: string | undefined) => void;
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [error, setError] = React.useState<string | null>(null);
+  return (
+    <div className="flex items-center gap-2 py-1">
+      <div className="w-10 h-10 shrink-0 rounded border border-slate-700 bg-[conic-gradient(#1e293b_25%,#0f172a_0_50%,#1e293b_0_75%,#0f172a_0)] bg-[length:10px_10px] flex items-center justify-center overflow-hidden">
+        {value ? <img src={value} alt="" className="max-w-full max-h-full object-contain" /> : <ImagePlus className="w-4 h-4 text-slate-600" />}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-[11px] text-slate-300">{label}</div>
+        {error && <div className="text-[10px] text-red-300">{error}</div>}
+      </div>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="px-2 py-1 rounded border border-slate-700 text-[10px] text-sky-300 hover:border-sky-500/60"
+      >
+        {value ? 'Change' : 'Add logo'}
+      </button>
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="p-1 rounded border border-slate-700 text-slate-400 hover:text-red-300 hover:border-red-500/60"
+          title="Remove logo"
+          aria-label={`Remove ${label} logo`}
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        aria-label={`${label} logo file`}
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (!file) return;
+          try {
+            setError(null);
+            onChange(await fileToLogo(file));
+          } catch (err) {
+            setError(String((err as Error)?.message ?? err));
+          }
+        }}
+      />
+    </div>
+  );
+}
+
 export const ItemInspector: React.FC<ItemInspectorProps> = ({
   item,
   onUpdateItem,
@@ -40,10 +169,44 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
   maxSequence,
   canDuplicate,
 }) => {
+  // One control section at a time, picked from a list (remembered between selections)
+  const [section, setSectionState] = React.useState<InspectorSection>(() => {
+    try {
+      return (localStorage.getItem('tg.inspectorSection') as InspectorSection) || 'position';
+    } catch {
+      return 'position';
+    }
+  });
+  const setSection = (s: InspectorSection) => {
+    setSectionState(s);
+    try {
+      localStorage.setItem('tg.inspectorSection', s);
+    } catch {
+      /* private mode */
+    }
+  };
+
   if (!item) return null;
 
   const equip = EQUIPMENT_MAP.get(item.equipId);
   if (!equip) return null;
+
+  // Sections that make sense for this piece
+  const flyable = equip.isGate;
+  const sections: { id: InspectorSection; label: string }[] = [
+    { id: 'position', label: 'Position' },
+    ...(equip.resizable ? [{ id: 'size' as const, label: 'Size' }] : []),
+    { id: 'elevation', label: 'Elevation' },
+    { id: 'heading', label: 'Heading (yaw)' },
+    ...(equip.category !== 'site' || flyable ? [{ id: 'tilt' as const, label: 'Tilt & flip (pitch, roll, mirror)' }] : []),
+    { id: 'led', label: 'LED lights' },
+    ...(['flag_pole', 'flagpole', 'container'].includes(equip.visualType) ? [{ id: 'logos' as const, label: 'Logos' }] : []),
+    ...(flyable ? [{ id: 'maneuver' as const, label: 'Flight maneuver & tier' }] : []),
+    ...(flyable || equip.visualType === 'launch_pad' ? [{ id: 'route' as const, label: 'Waypoint order' }] : []),
+    { id: 'all', label: 'All controls' },
+  ];
+  const current = sections.some((x) => x.id === section) ? section : 'position';
+  const show = (id: InspectorSection) => current === 'all' || current === id;
 
   const insideSafeZone = isInsideFence(item.x, item.y);
 
@@ -69,15 +232,16 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
       className="absolute bottom-14 right-4 z-20 w-80 max-h-[calc(100%-4.5rem)] compact:left-2 compact:right-2 compact:w-auto compact:bottom-14 compact:max-h-[48%] overflow-y-auto bg-tg-panel/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3.5 shadow-2xl text-xs font-mono text-slate-200"
     >
       {/* Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-800">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-800">
+        {/* Long names shorten with "…" so the Lock and close buttons always stay in view */}
+        <div className="flex items-center gap-2 min-w-0 flex-1" title={equip.name}>
           <div
-            className="w-3 h-3 rounded-full"
+            className="w-3 h-3 rounded-full shrink-0"
             style={{ backgroundColor: equip.color }}
           />
-          <div>
+          <div className="min-w-0">
             <h4 className="font-bold text-slate-100 truncate">{equip.name}</h4>
-            <span className="text-[10px] text-slate-400">
+            <span className="block text-[10px] text-slate-400 truncate">
               {equip.width}m × {equip.depth}m · {equip.heightDesc}
             </span>
           </div>
@@ -121,9 +285,30 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
         </div>
       )}
 
+      {/* Control picker: choose which set of controls to show */}
+      <label className="mt-3 flex items-center gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-slate-400 shrink-0">Control</span>
+        <span className="relative flex-1">
+          <select
+            value={current}
+            onChange={(e) => setSection(e.target.value as InspectorSection)}
+            aria-label="Choose which control to show"
+            className="w-full appearance-none bg-slate-900 border border-sky-500/40 hover:border-sky-400 rounded-lg pl-2.5 pr-8 py-1.5 text-xs font-semibold text-sky-200 focus:outline-hidden focus:border-sky-400 cursor-pointer"
+          >
+            {sections.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-sky-300 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </span>
+      </label>
+
       {/* Everything that moves or turns the piece is switched off while it's locked */}
       <fieldset disabled={!!item.locked} className={`m-0 p-0 border-0 min-w-0 ${item.locked ? 'opacity-40 pointer-events-none select-none' : ''}`}>
       {/* Coordinates & Positioning */}
+      {show('position') && (
       <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="bg-slate-900 p-2 rounded border border-slate-800">
           <label className="text-[10px] text-slate-400 block mb-1">X Position</label>
@@ -158,8 +343,194 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
         </div>
       </div>
 
-      {/* Gate Yaw Rotation (Orientation / Heading) */}
+      )}
+
+      {/* Size: every extra element (and resizable piece) can have its own width, length and height */}
+      {show('size') && equip.resizable && (
+        <div className="mt-2 bg-slate-900 p-2.5 rounded border border-slate-800">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold text-amber-200 flex items-center gap-1.5">
+              <Move className="w-3.5 h-3.5 text-amber-300" />
+              Size
+            </span>
+            {(item.sizeW || item.sizeD || item.sizeH) && (
+              <button
+                type="button"
+                onClick={() => onUpdateItem(item.id, { sizeW: undefined, sizeD: undefined, sizeH: undefined })}
+                className="text-[10px] text-slate-400 hover:text-sky-300"
+                title={`Back to ${equip.width} × ${equip.depth} m${equip.tierHeight ? ` · ${equip.tierHeight} m high` : ''}`}
+              >
+                Reset
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {sizeFieldsFor(equip).map((f) => {
+              const value = f.key === 'round' ? item.sizeW ?? equip.width : f.key === 'hoop' ? item.sizeH ?? f.def : item[f.key] ?? f.def;
+              return (
+                <label key={f.label} className="block">
+                  <span className="text-[10px] text-slate-400 block mb-1">{f.label}</span>
+                  <span className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step={f.step ?? 0.5}
+                      min={f.min ?? 0.2}
+                      max={f.max ?? 300}
+                      aria-label={f.label}
+                      value={Number(value.toFixed(2))}
+                      onChange={(e) => {
+                        const v = Number(e.target.value);
+                        if (!Number.isFinite(v) || v <= 0) return;
+                        const n = Math.min(f.max ?? 300, v);
+                        // Round things keep their shape: one number sets both width and length
+                        onUpdateItem(
+                          item.id,
+                          f.key === 'round'
+                            ? { sizeW: n, sizeD: f.alsoD === false ? item.sizeD : n }
+                            : f.key === 'hoop'
+                              ? { sizeW: n, sizeH: n } // a hoop: diameter is both its width and its height
+                              : { [f.key]: n }
+                        );
+                      }}
+                      className="w-full bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-sky-300 text-xs font-mono"
+                    />
+                    <span className="text-slate-500 text-[10px]">m</span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Elevation: raise the whole item off the ground (on a stand, a stack, a roof...) */}
+      {show('elevation') && (
+      <div className="mt-2 bg-slate-900 p-2.5 rounded border border-slate-800">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-bold text-sky-300 flex items-center gap-1.5">
+            <ArrowUp className="w-3.5 h-3.5 text-sky-400" />
+            Elevation
+          </span>
+          <div className="flex items-center gap-1">
+            <input
+              type="number"
+              min="0"
+              max={MAX_ITEM_ELEVATION}
+              step="0.5"
+              aria-label="Elevation in metres"
+              value={Number((item.elevation ?? 0).toFixed(1))}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (!isNaN(val)) onUpdateItem(item.id, { elevation: Math.max(0, Math.min(MAX_ITEM_ELEVATION, val)) });
+              }}
+              className="w-14 bg-slate-950 border border-slate-700 rounded px-1.5 py-0.5 text-right font-mono text-xs font-bold text-sky-300 focus:outline-hidden focus:border-sky-400"
+            />
+            <span className="text-slate-400 text-xs font-mono">m</span>
+          </div>
+        </div>
+        <input
+          type="range"
+          min="0"
+          max={MAX_ITEM_ELEVATION}
+          step="0.5"
+          value={item.elevation ?? 0}
+          onChange={(e) => onUpdateItem(item.id, { elevation: Number(e.target.value) })}
+          aria-label="Elevation"
+          className="w-full accent-sky-400 bg-slate-800 h-1.5 rounded cursor-pointer"
+        />
+        <div className="flex justify-between text-[9px] font-mono text-slate-500 px-0.5">
+          <span>0 m (ground)</span>
+          <span>{MAX_ITEM_ELEVATION / 2} m</span>
+          <span>{MAX_ITEM_ELEVATION} m</span>
+        </div>
+      </div>
+
+      )}
+
+      {/* LED neon lights on the frame */}
+      {show('led') && (
+        <div className="mt-2 bg-slate-900 p-2.5 rounded border border-slate-800">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-yellow-200 flex items-center gap-1.5">
+              <Lightbulb className="w-3.5 h-3.5 text-yellow-300" />
+              LED lights
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!item.led}
+              aria-label="LED lights"
+              onClick={() => onUpdateItem(item.id, { led: item.led ? undefined : LED_COLORS[0] })}
+              className={`relative w-10 h-5 rounded-full border transition ${
+                item.led ? 'bg-yellow-400/30 border-yellow-300/70' : 'bg-slate-800 border-slate-700'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-3.5 h-3.5 rounded-full transition-all ${item.led ? 'left-5 bg-yellow-200' : 'left-0.5 bg-slate-500'}`}
+                style={item.led ? { boxShadow: `0 0 8px ${item.led}` } : undefined}
+              />
+            </button>
+          </div>
+          {item.led && (
+            <div role="radiogroup" aria-label="LED colour" className="flex flex-wrap gap-1.5 mt-2">
+              {LED_COLORS.map((col) => (
+                <button
+                  key={col}
+                  type="button"
+                  role="radio"
+                  aria-checked={item.led === col}
+                  aria-label={`LED colour ${col}`}
+                  onClick={() => onUpdateItem(item.id, { led: col })}
+                  className={`w-6 h-6 rounded-full border-2 transition ${item.led === col ? 'border-white scale-110' : 'border-transparent'}`}
+                  style={{ background: col, boxShadow: `0 0 10px ${col}` }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Logos: one on a flag's banner; one per wall (and the roof) of a container */}
+      {show('logos') && (equip.visualType === 'flag_pole' || equip.visualType === 'flagpole' || equip.visualType === 'container') && (
+        <div className="mt-2 bg-slate-900 p-2.5 rounded border border-slate-800">
+          <span className="text-[11px] font-bold text-pink-300 flex items-center gap-1.5 mb-1">
+            <ImagePlus className="w-3.5 h-3.5 text-pink-400" />
+            Logos
+          </span>
+          {(equip.visualType === 'flag_pole' || equip.visualType === 'flagpole'
+            ? ([['flag', equip.visualType === 'flagpole' ? 'Flag image' : 'Flag (both sides)']] as [LogoSlot, string][])
+            : ([
+                ['left', 'Left wall, outside'],
+                ['leftIn', 'Left wall, inside'],
+                ['right', 'Right wall, outside'],
+                ['rightIn', 'Right wall, inside'],
+                ['roof', 'Roof (on top)'],
+                ['ceiling', 'Ceiling (inside)'],
+              ] as [LogoSlot, string][])
+          ).map(([slot, label]) => (
+            <LogoSlotRow
+              key={slot}
+              label={label}
+              value={item.logos?.[slot]}
+              onChange={(logo) => {
+                const next = { ...(item.logos ?? {}) };
+                if (logo) next[slot] = logo;
+                else delete next[slot];
+                onUpdateItem(item.id, { logos: Object.keys(next).length ? next : undefined });
+              }}
+            />
+          ))}
+          {equip.visualType === 'container' && (
+            <p className="text-[10px] text-slate-500 mt-1">Left and right as seen flying through in the arrow's direction. Inside logos and the ceiling are what you see in FPV.</p>
+          )}
+        </div>
+      )}
+
+      {/* Gate Yaw Rotation (Orientation / Heading), then tilt & mirror */}
+      {(show('heading') || show('tilt')) && (
       <div className="mt-2.5 bg-slate-900 p-2.5 rounded border border-slate-800">
+        {show('heading') && (
+        <>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-bold text-slate-200 flex items-center gap-1.5">
             <Compass className="w-3.5 h-3.5 text-amber-400" />
@@ -331,8 +702,13 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
           ))}
         </div>
 
+        </>
+        )}
+
+        {show('tilt') && (
+        <>
         {/* Gate Pitch Rotation (Tilt Forward / Backward) */}
-        <div className="mt-3 pt-2.5 border-t border-slate-800">
+        <div className={current === 'all' ? 'mt-3 pt-2.5 border-t border-slate-800' : ''}>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1.5">
               <ArrowUp className="w-3.5 h-3.5 text-emerald-400" />
@@ -503,11 +879,15 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
             {item.isMirrored ? 'Mirrored (Flipped)' : 'Mirror Gate'}
           </button>
         </div>
+        </>
+        )}
       </div>
+      )}
 
       </fieldset>
 
       {/* Flight Maneuver & Entry/Exit Selector */}
+      {show('maneuver') && flyable && (
       <div className="mt-2.5 bg-slate-900 p-2.5 rounded border border-slate-800">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] text-slate-400 flex items-center gap-1">
@@ -764,7 +1144,10 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
         )}
       </div>
 
+      )}
+
       {/* Flight Path Waypoint Order */}
+      {show('route') && (flyable || equip.visualType === 'launch_pad') && (
       <div className="mt-2.5 bg-slate-900 p-2 rounded border border-slate-800">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] text-slate-400 flex items-center gap-1">
@@ -822,6 +1205,8 @@ export const ItemInspector: React.FC<ItemInspectorProps> = ({
           )}
         </div>
       </div>
+
+      )}
 
       {/* Action Buttons: Duplicate & Delete */}
       <div className="mt-3 flex items-center gap-2 pt-2 border-t border-slate-800">
