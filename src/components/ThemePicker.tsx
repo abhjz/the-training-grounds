@@ -4,6 +4,7 @@ import { Check, Palette as PaletteIcon, Sparkles, Square, X } from 'lucide-react
 import { PALETTES, Palette } from '../theme/palettes';
 import { buildTheme, Look } from '../theme/engine';
 import { COASTAL_SUNSET } from '../theme/coastalSunset';
+import { GfxQuality, setGraphicsQuality, useGraphicsQuality } from './Graphics';
 
 interface ThemePickerProps {
   isOpen: boolean;
@@ -156,6 +157,8 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({ isOpen, activeId, look
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
+  const gfx = useGraphicsQuality();
+
   if (!isOpen) return null;
 
   // Portal: the sidebar's backdrop blur would otherwise trap this full-screen dialog inside it
@@ -221,6 +224,37 @@ export const ThemePicker: React.FC<ThemePickerProps> = ({ isOpen, activeId, look
                     {active && <Check className="w-3.5 h-3.5 text-sky-400" />}
                   </div>
                   <div className="text-[10px] text-slate-400">{o.mood}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="px-5 pt-5">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2">3D graphics</div>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="3D graphics quality">
+            {([
+              { id: 'high' as GfxQuality, name: 'High', note: 'Sharp sun shadows, soft contact shading, glow. Best on a computer.' },
+              { id: 'medium' as GfxQuality, name: 'Balanced', note: 'Sun shadows and glow. Good for most phones and tablets.' },
+              { id: 'low' as GfxQuality, name: 'Low', note: 'No shadows or effects. Fastest, for older devices.' },
+            ]).map((o) => {
+              const active = o.id === gfx;
+              return (
+                <button
+                  key={o.id}
+                  id={`btn-gfx-${o.id}`}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setGraphicsQuality(o.id)}
+                  className={`text-left p-2.5 rounded-xl border transition ${
+                    active ? 'border-sky-400 bg-sky-500/10 ring-1 ring-sky-400/60' : 'border-slate-800 bg-slate-900/60 hover:border-slate-600'
+                  }`}
+                >
+                  <div className="text-xs font-bold text-slate-100 flex items-center gap-1.5">
+                    {o.name}
+                    {active && <Check className="w-3.5 h-3.5 text-sky-400" />}
+                  </div>
+                  <div className="text-[10px] text-slate-400 mt-0.5">{o.note}</div>
                 </button>
               );
             })}

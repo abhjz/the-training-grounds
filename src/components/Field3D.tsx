@@ -36,6 +36,7 @@ import { cachedLogoImage } from '../utils/logos';
 import { DesertField, DesertWorld, LedOverlay, SiteModel } from './SiteScenery';
 import { GROUND_COVER_TYPES, itemDims } from '../constants/siteEquipment';
 import { DESERT } from '../theme/desert';
+import { glowBoost, graphicsQuality, PostFX, SkyDome, SunShadows, useGraphicsQuality } from './Graphics';
 import { isNativeApp, saveFile } from '../utils/fileSaver';
 
 // ---------------------------------------------------------------------------
@@ -104,6 +105,15 @@ const defaultCameraPos = (aspect = 1.6): [number, number, number] => {
   const pullBack = aspect < 1.35 ? Math.min(2.4, 1.35 / aspect) : 1;
   const k = fieldScale() * pullBack;
   return [0, 44 * k, 52 * k];
+};
+
+/** Desert Site sky: clear morning, sun in the south-east (field +X), about 35° up, haze on the horizon. */
+const DESERT_SKY = {
+  zenith: '#5E8FC4',
+  horizon: '#D9DEDD',
+  ground: '#B5A790',
+  sunDir: [78, 58, 22] as [number, number, number],
+  sunColor: '#FFE9C4',
 };
 
 /** Writing colour per look (the same faint tones each look used on its own ground). */
@@ -231,10 +241,12 @@ const LedContext = React.createContext<string | null>(null);
 function NeonMaterial({ color }: { color: string }) {
   // All of the light comes from the LED colour itself (black base), so it stays that colour instead of
   // washing out to white
-  return <meshStandardMaterial color="#000000" emissive={color} emissiveIntensity={1.15} toneMapped={false} roughness={0.4} />;
+  // With the effects on, the light is brighter than white and the bloom pass turns that into real glow
+  return <meshStandardMaterial color="#000000" emissive={color} emissiveIntensity={1.15 * glowBoost()} toneMapped={false} roughness={0.4} />;
 }
 function HaloMaterial({ color }: { color: string }) {
-  return <meshBasicMaterial color={color} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />;
+  // The drawn halo stands in for glow on Low quality only; bloom does it properly otherwise
+  return <meshBasicMaterial color={color} transparent opacity={graphicsQuality() === 'low' ? 0.3 : 0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />;
 }
 
 function Bar({
@@ -1141,7 +1153,10 @@ function DragManager({
 /** Shares the live camera and canvas element with code outside the 3D canvas (drag-and-drop). */
 function CameraGrabber({ target }: { target: React.MutableRefObject<{ camera: THREE.Camera; dom: HTMLElement } | null> }) {
   const { camera, gl } = useThree();
+  const controls = useThree((s) => s.controls);
   target.current = { camera, dom: gl.domElement };
+  // Development only: lets test scripts put the camera at an exact spot
+  if (import.meta.env.DEV) (window as any).__tg3d = { camera, controls, gl };
   return null;
 }
 
@@ -1597,6 +1612,7 @@ export default function Field3D({
   const exportPct = Math.min(99, Math.floor(exportProgress * 100));
   const groundMark: GroundMarkSource = groundPaint ?? groundName;
   const sceneryMoves = useSceneryMotionSetting();
+  const gfx = useGraphicsQuality();
   // Re-read on every render so a theme switch (themeId prop) recolours the scene
   const fc = fieldColors();
   const narrowViewport = useMediaMatch('(max-width: 767px)');
@@ -1640,7 +1656,7 @@ export default function Field3D({
             <fog attach="fog" args={['#0B0E11', 90 * fieldScale(), 260 * fieldScale()]} />
             <ambientLight intensity={0.55} color="#FFFFFF" />
             <hemisphereLight args={['#EAECEF', '#0B0E11', 0.6]} />
-            <directionalLight position={[-20, 50, 30]} intensity={1.0} color="#FFFFFF" />
+            <directionalLight position={[-20, 50, 30]} userData={{ sunDir: [-20, 50, 30] }} intensity={1.0} color="#FFFFFF" />
             <TradingField groundName="" fc={fc} />
             <TradingFloorWorld scale={fieldScale()} />
           </>
@@ -1650,7 +1666,7 @@ export default function Field3D({
             <fog attach="fog" args={[SHOWROOM.scene.fog, 120 * fieldScale(), 380 * fieldScale()]} />
             <ambientLight intensity={0.7} color="#FFFFFF" />
             <hemisphereLight args={['#F4F5F7', '#6E7177', 0.75]} />
-            <directionalLight position={[-30, 60, 40]} intensity={1.15} color="#FFF8EE" />
+            <directionalLight position={[-30, 60, 40]} userData={{ sunDir: [-30, 60, 40] }} intensity={1.15} color="#FFF8EE" />
             <directionalLight position={[40, 30, -30]} intensity={0.35} color="#E6EEFF" />
             <ShowroomField groundName="" fc={fc} />
             <ShowroomWorld scale={fieldScale()} />
@@ -1661,7 +1677,7 @@ export default function Field3D({
             <fog attach="fog" args={[COASTAL_SUNSET.scene.fog, 140 * fieldScale(), 400 * fieldScale()]} />
             <ambientLight intensity={0.42} color="#E6D6EE" />
             <hemisphereLight args={['#FFC59A', '#1E5A6A', 0.8]} />
-            <directionalLight position={[SUN_DIR.x * 120, 30, SUN_DIR.z * 120]} intensity={1.9} color="#FFB27A" />
+            <directionalLight position={[SUN_DIR.x * 120, 30, SUN_DIR.z * 120]} userData={{ sunDir: [SUN_DIR.x * 120, 30, SUN_DIR.z * 120] }} intensity={1.9} color="#FFB27A" />
             <directionalLight position={[30, 22, 40]} intensity={0.45} color="#FF79B8" />
             <CoastalField groundName="" fc={fc} />
             <CoastalSunsetWorld scale={fieldScale()} fogNear={140} fogFar={400} />
@@ -1669,10 +1685,13 @@ export default function Field3D({
         ) : fc.style === 'desert' ? (
           <>
             {/* Desert Site: clear morning, sun low in the south-east (field +X), haze on the horizon */}
-            <fog attach="fog" args={[DESERT.scene.fog, 160 * fieldScale(), 520 * fieldScale()]} />
-            <ambientLight intensity={0.55} color="#FFF4E2" />
-            <hemisphereLight args={['#DCE6EE', '#8E7F68', 0.65]} />
-            <directionalLight position={[90, 70, 25]} intensity={1.7} color="#FFF0D6" />
+            {/* Haze: nothing nearby, thickening to the horizon colour of the sky */}
+            <fog attach="fog" args={[DESERT_SKY.horizon, 220, 2200]} />
+            {/* Most of the fill light comes from the sky itself (SkyDome bakes it into the scene's lighting) */}
+            <ambientLight intensity={0.12} color="#FFF4E2" />
+            <hemisphereLight args={['#DCE6EE', '#A8957A', 0.28]} />
+            <directionalLight position={DESERT_SKY.sunDir} userData={{ sunDir: DESERT_SKY.sunDir }} intensity={2.3} color="#FFEBCB" />
+            <SkyDome spec={DESERT_SKY} lightScene envIntensity={0.75} />
             <DesertField groundName="" fc={fc} />
             <DesertWorld scale={fieldScale()} />
           </>
@@ -1682,7 +1701,7 @@ export default function Field3D({
             <fog attach="fog" args={[SUNKEN_FOG.color, SUNKEN_FOG.near * fieldScale(), SUNKEN_FOG.far * fieldScale()]} />
             <ambientLight intensity={0.35} color="#8FE0D6" />
             <hemisphereLight args={['#C8FFF4', '#062228', 0.55]} />
-            <directionalLight position={[-12, 50, 8]} intensity={1.5} color="#FFF4DC" />
+            <directionalLight position={[-12, 50, 8]} userData={{ sunDir: [-12, 50, 8] }} intensity={1.5} color="#FFF4DC" />
             <SunkenDeck groundName="" fc={fc} />
             <SunkenCity scale={fieldScale()} />
           </>
@@ -1691,10 +1710,14 @@ export default function Field3D({
             <fog attach="fog" args={[fc.sceneBg, 70 * fieldScale(), 160 * fieldScale()]} />
             <ambientLight intensity={0.55} />
             <hemisphereLight args={[fc.hemiSky, fc.hemiGround, 0.5]} />
-            <directionalLight position={[20, 40, 15]} intensity={1.1} />
+            <directionalLight position={[20, 40, 15]} userData={{ sunDir: [20, 40, 15] }} intensity={1.1} />
             <FieldGround groundName="" fc={fc} />
           </>
         )}
+        {/* Graphics quality: real sun shadows, glow, ambient occlusion and film tone mapping */}
+        {gfx !== 'low' && <SunShadows key={`${gfx}-${fc.style}`} mapSize={gfx === 'high' ? 4096 : 2048} />}
+        {gfx !== 'low' && <PostFX high={gfx === 'high'} />}
+
         {/* Ground marking on its own layer, above the turf, roads and grass (not baked into the ground) */}
         <GroundMarkOverlay mark={groundMark} fill={MARK_FILL[fc.style ?? 'flat'] ?? MARK_FILL.flat} />
         <CameraGrabber target={cameraRef} />

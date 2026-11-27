@@ -6,6 +6,7 @@ import { drawWatermarkText, GroundMarkSource, hasGroundMark } from '../utils/wat
 import { FieldColors } from '../theme/engine';
 import { DESERT } from '../theme/desert';
 import { cachedLogoImage } from '../utils/logos';
+import { glowBoost, graphicsQuality, makeBumpNormalMap, makeFoliageGeometry, makeFrondGeometry, paintGround, detileGround } from './Graphics';
 
 /**
  * 3D models for the site pieces (src/constants/siteEquipment.ts) and the Desert look's world.
@@ -48,16 +49,34 @@ function useCanvasTexture(w: number, h: number, draw: (ctx: CanvasRenderingConte
 }
 
 /** Speckled sand / gravel texture. */
-function grain(ctx: CanvasRenderingContext2D, base: string, dark: string, light: string, n: number, rnd: () => number) {
-  const { width: W, height: H } = ctx.canvas;
-  ctx.fillStyle = base;
-  ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < n; i++) {
-    ctx.fillStyle = rnd() < 0.5 ? dark : light;
-    const s = 1 + rnd() * 2.5;
-    ctx.fillRect(rnd() * W, rnd() * H, s, s);
-  }
+function grain(ctx: CanvasRenderingContext2D, base: string, dark: string, light: string, _n: number, rnd: () => number) {
+  // Smooth natural patches of the three tones with a fine grain (no hard square specks)
+  paintGround(ctx, dark, base, light, Math.floor(rnd() * 1000) + 1);
 }
+
+// Shared bump (normal) map for rough ground, cloned per surface so each can tile at its own scale
+let bumpBase: THREE.DataTexture | null = null;
+function useBump(repeatX: number, repeatY: number) {
+  const tex = useMemo(() => {
+    bumpBase ??= makeBumpNormalMap(7);
+    const t = bumpBase.clone();
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeatX, repeatY);
+    t.needsUpdate = true;
+    return t;
+  }, [repeatX, repeatY]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  return tex;
+}
+const BUMP = new THREE.Vector2(0.55, 0.55);
+
+// Shared organic shapes for crowns and bushes
+let foliage: THREE.BufferGeometry[] | null = null;
+let bushGeo: THREE.BufferGeometry | null = null;
+let frondGeo: THREE.BufferGeometry | null = null;
+const foliageGeos = () => (foliage ??= [makeFoliageGeometry(1.3, 3), makeFoliageGeometry(4.1, 3), makeFoliageGeometry(7.7, 3)]);
+const bushGeometry = () => (bushGeo ??= makeFoliageGeometry(2.9, 3, true));
+const frondGeometry = () => (frondGeo ??= makeFrondGeometry());
 
 /**
  * Ground layers stack a few centimetres apart (thinner than real turf), because on a big field the
@@ -79,6 +98,9 @@ function Surface({ w, d, y, children }: { w: number; d: number; y: number; child
 
 /** Soft dark blob on the ground, offset away from the morning sun (SE, local +X before rotation). */
 function BlobShadow({ r, len = 0, opacity = 0.28 }: { r: number; len?: number; opacity?: number }) {
+  return graphicsQuality() === 'low' ? <BlobShadowDisc r={r} len={len} opacity={opacity} /> : null; // real shadows otherwise
+}
+function BlobShadowDisc({ r, len, opacity }: { r: number; len: number; opacity: number }) {
   const tex = useCanvasTexture(64, 64, (ctx) => {
     const g = ctx.createRadialGradient(32, 32, 2, 32, 32, 32);
     g.addColorStop(0, 'rgba(0,0,0,1)');
@@ -102,10 +124,17 @@ function TurfPitch({ w, d, h, selected }: { w: number; d: number; h: number; sel
       ctx.fillStyle = i % 2 ? '#2E7D1F' : '#287019';
       ctx.fillRect((i * 512) / stripes, 0, 512 / stripes + 1, 256);
     }
+    // Blade speckle, so the turf is not a flat fill
+    const rnd = seeded('turf');
+    for (let i = 0; i < 9000; i++) {
+      ctx.fillStyle = rnd() > 0.5 ? 'rgba(255,255,190,0.05)' : 'rgba(0,25,0,0.07)';
+      ctx.fillRect(rnd() * 512, rnd() * 256, 1, 1 + rnd() * 2);
+    }
     ctx.strokeStyle = 'rgba(255,255,255,0.35)';
     ctx.lineWidth = 2;
     ctx.strokeRect(6, 6, 500, 244);
   }, [stripes]);
+  const turfBump = useBump(w / 1.6, d / 1.6);
   const posts = useMemo(() => {
     const out: [number, number][] = [];
     const step = 6;
@@ -117,7 +146,7 @@ function TurfPitch({ w, d, h, selected }: { w: number; d: number; h: number; sel
   return (
     <group>
       <Surface w={w} d={d} y={LAYER_Y[5]}>
-        <meshStandardMaterial map={turf} roughness={0.95} color={selected ? '#fef08a' : '#ffffff'} {...onTop(5)} />
+        <meshStandardMaterial map={turf} roughness={0.95} normalMap={turfBump} normalScale={BUMP} color={selected ? '#fef08a' : '#ffffff'} {...onTop(5)} />
       </Surface>
       {/* Net fence */}
       {[
@@ -203,9 +232,10 @@ function FlatSurface({ w, d, kind, selected, id }: { w: number; d: number; kind:
       ctx.fillRect(238, 0, 18, 256);
     }
   }, [kind, id], [1, Math.max(1, Math.round(d / Math.max(w, 4)))]);
+  const bump = useBump(Math.max(1, w / 4), Math.max(1, d / 4));
   return (
     <Surface w={w} d={d} y={LAYER_Y[spec.layer]}>
-      <meshStandardMaterial map={tex} roughness={1} color={selected ? '#fef08a' : '#ffffff'} {...onTop(spec.layer)} />
+      <meshStandardMaterial map={tex} roughness={kind === 'asphalt' ? 0.85 : 1} normalMap={bump} normalScale={BUMP} color={selected ? '#fef08a' : '#ffffff'} {...onTop(spec.layer)} />
     </Surface>
   );
 }
@@ -276,112 +306,150 @@ function Grass({ w, d, id, selected }: { w: number; d: number; id: string; selec
 }
 
 // ---------------------------------------------------------------- terrain
-const BUSH_COLORS = ['#3B3A2A', '#4A4A33', '#55543A', '#2F3A24', '#5E5B3C'];
+const BUSH_COLORS = ['#46502F', '#56603A', '#636B42', '#38472A', '#6E7248'];
 function ScrubPatch({ w, d, id }: { w: number; d: number; id: string }) {
-  const bushes = useMemo(() => {
+  const mesh = useMemo(() => {
     const rnd = seeded(id);
     const n = Math.min(260, Math.max(4, Math.round((w * d) / 9)));
-    return Array.from({ length: n }, () => ({
-      x: (rnd() - 0.5) * w,
-      z: (rnd() - 0.5) * d,
-      s: 0.45 + rnd() * 0.85,
-      c: BUSH_COLORS[Math.floor(rnd() * BUSH_COLORS.length)],
-    }));
-  }, [w, d, id]);
-  const mesh = useMemo(() => {
-    const geo = new THREE.SphereGeometry(1, 8, 5, 0, Math.PI * 2, 0, Math.PI / 2);
-    const mat = new THREE.MeshStandardMaterial({ roughness: 1 });
-    const m = new THREE.InstancedMesh(geo, mat, bushes.length);
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.95, vertexColors: true });
+    const m = new THREE.InstancedMesh(bushGeometry(), mat, n);
     const o = new THREE.Object3D();
     const col = new THREE.Color();
-    bushes.forEach((b, i) => {
-      o.position.set(b.x, 0, b.z);
-      o.scale.set(b.s, b.s * 0.75, b.s);
+    for (let i = 0; i < n; i++) {
+      const s = 0.5 + rnd() * 0.9;
+      o.position.set((rnd() - 0.5) * w, 0, (rnd() - 0.5) * d);
+      o.rotation.y = rnd() * Math.PI * 2;
+      o.scale.set(s * (0.85 + rnd() * 0.4), s * (0.6 + rnd() * 0.35), s * (0.85 + rnd() * 0.4));
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
-      m.setColorAt(i, col.set(b.c));
-    });
+      m.setColorAt(i, col.set(BUSH_COLORS[Math.floor(rnd() * BUSH_COLORS.length)]).multiplyScalar(1.5));
+    }
     m.instanceMatrix.needsUpdate = true;
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
     return m;
-  }, [bushes]);
-  useEffect(() => () => {
-    mesh.geometry.dispose();
-    (mesh.material as THREE.Material).dispose();
-  }, [mesh]);
+  }, [w, d, id]);
+  useEffect(() => () => (mesh.material as THREE.Material).dispose(), [mesh]);
   return <primitive object={mesh} />;
 }
 
 function Berm({ w, d, h, selected }: { w: number; d: number; h: number; selected: boolean }) {
+  const bump = useBump(Math.max(1, w / 2), Math.max(1, d / 4));
   return (
     <mesh scale={[w / 2, h, d / 2]}>
       <sphereGeometry args={[1, 20, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-      <meshStandardMaterial color={selected ? '#fde68a' : '#B0A186'} roughness={1} />
+      <meshStandardMaterial color={selected ? '#fde68a' : '#BDAE92'} roughness={1} normalMap={bump} normalScale={BUMP} />
     </mesh>
   );
 }
 
 // ---------------------------------------------------------------- trees
-function Crown({ r, h, colors, seed, y0 }: { r: number; h: number; colors: string[]; seed: string; y0: number }) {
+function Crown({ r, h, colors, seed, y0, big }: { r: number; h: number; colors: string[]; seed: string; y0: number; big: boolean }) {
   const blobs = useMemo(() => {
     const rnd = seeded(seed);
-    const n = Math.max(5, Math.round(r * 1.4));
+    const core = big ? Math.max(9, Math.round(r * 2.2)) : 5;
+    const n = core + (big ? 8 : 3); // the extra ones are small clumps that break up the outline
+    const top = h - y0;
     return Array.from({ length: n }, (_, i) => {
+      const clump = i >= core;
       const a = rnd() * Math.PI * 2;
-      const dist = i === 0 ? 0 : r * (0.25 + rnd() * 0.5);
-      const s = r * (0.35 + rnd() * 0.3);
-      return { x: Math.cos(a) * dist, z: Math.sin(a) * dist, y: y0 + (h - y0) * (0.35 + rnd() * 0.35), s, c: colors[i % colors.length] };
+      const dist = i === 0 ? 0 : clump ? r * (0.62 + rnd() * 0.28) : r * Math.sqrt(rnd()) * 0.72;
+      const edge = Math.min(1, dist / (r * 0.72)); // 0 centre .. 1 rim: the canopy is domed
+      const s = clump ? r * (0.17 + rnd() * 0.1) : r * (0.36 + rnd() * 0.2) * (1 - edge * 0.25);
+      return {
+        x: Math.cos(a) * dist,
+        z: Math.sin(a) * dist,
+        y: y0 + top * (0.62 - edge * edge * 0.28 + (rnd() - 0.5) * 0.12),
+        s,
+        sy: s * (0.62 + rnd() * 0.2),
+        rot: rnd() * Math.PI * 2,
+        g: i % 3,
+        c: colors[i % colors.length],
+      };
     });
-  }, [r, h, seed, y0, colors]);
+  }, [r, h, seed, y0, big]);
+  const geos = foliageGeos();
   return (
     <group>
       {blobs.map((b, i) => (
-        <mesh key={i} position={[b.x, b.y, b.z]} scale={[b.s, b.s * 0.72, b.s]}>
-          <icosahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color={b.c} roughness={1} flatShading />
+        <mesh key={i} geometry={geos[b.g]} position={[b.x, b.y, b.z]} rotation-y={b.rot} scale={[b.s, b.sy, b.s]}>
+          <meshStandardMaterial color={b.c} roughness={0.92} vertexColors />
         </mesh>
       ))}
     </group>
   );
 }
 
+const TREE_BIG = ['#4E7A35', '#5A8A3D', '#446E2F', '#63934A'];
+const TREE_SMALL = ['#7C8C4E', '#8A9A56', '#6E7E45'];
 function Tree({ w, h, big, seed }: { w: number; h: number; big: boolean; seed: string }) {
   const r = w / 2;
-  const colors = big ? ['#2F4A22', '#36552A', '#28401D', '#3C5E2D'] : ['#4F5A33', '#5A6638', '#46502D'];
-  const trunkH = big ? h * 0.35 : h * 0.45;
+  const trunkH = big ? h * 0.42 : h * 0.5;
+  const trunkR = big ? Math.max(0.2, r * 0.045) : Math.max(0.08, r * 0.05);
+  // A few boughs spreading up into the crown
+  const boughs = useMemo(() => {
+    const rnd = seeded('b' + seed);
+    return Array.from({ length: big ? 4 : 2 }, (_, i) => ({ a: (i / (big ? 4 : 2)) * Math.PI * 2 + rnd(), tilt: 0.55 + rnd() * 0.35, len: r * (0.5 + rnd() * 0.25) }));
+  }, [seed, big, r]);
   return (
     <group>
       <BlobShadow r={r * 0.9} len={h * 0.5} opacity={big ? 0.32 : 0.25} />
-      {(big ? [-0.6, 0.5, 0.1] : [0]).map((dx, i) => (
-        <mesh key={i} position={[dx, trunkH / 2, i * 0.4 - 0.4]} rotation-z={dx * 0.15}>
-          <cylinderGeometry args={[big ? 0.22 : 0.12, big ? 0.32 : 0.16, trunkH, 7]} />
-          <meshStandardMaterial color="#5B4632" roughness={1} />
-        </mesh>
+      <mesh position={[0, trunkH / 2, 0]}>
+        <cylinderGeometry args={[trunkR * 0.8, trunkR * 1.25, trunkH, 9]} />
+        <meshStandardMaterial color="#6B523A" roughness={1} />
+      </mesh>
+      {boughs.map((b, i) => (
+        <group key={i} position={[0, trunkH * 0.82, 0]} rotation-y={b.a}>
+          <mesh rotation-z={-b.tilt} position={[Math.sin(b.tilt) * b.len * 0.5, Math.cos(b.tilt) * b.len * 0.5, 0]}>
+            <cylinderGeometry args={[trunkR * 0.35, trunkR * 0.7, b.len, 6]} />
+            <meshStandardMaterial color="#6B523A" roughness={1} />
+          </mesh>
+        </group>
       ))}
-      <Crown r={r} h={h} colors={colors} seed={seed} y0={trunkH} />
+      <Crown r={r} h={h} colors={big ? TREE_BIG : TREE_SMALL} seed={seed} y0={trunkH} big={big} />
     </group>
   );
 }
 
 function Palm({ w, h, seed }: { w: number; h: number; seed: string }) {
   const k = w / 5; // fronds scale with the crown size (5 m by default)
-  const segs = 5;
-  const lean = useMemo(() => 0.04 + seeded(seed)() * 0.08, [seed]);
+  const segs = 7;
+  const { lean, fronds } = useMemo(() => {
+    const rnd = seeded(seed);
+    const lean = 0.03 + rnd() * 0.07;
+    const fronds = Array.from({ length: 17 }, (_, i) => ({
+      a: (i / 17) * Math.PI * 2 + rnd() * 0.3,
+      // an upper ring that stands up and a lower ring that hangs
+      tilt: i % 3 === 0 ? 0.55 + rnd() * 0.2 : i % 3 === 1 ? 0.15 + rnd() * 0.2 : -0.25 - rnd() * 0.25,
+      s: 0.8 + rnd() * 0.3,
+      c: ['#6F9440', '#5F8436', '#7BA048'][i % 3],
+    }));
+    return { lean, fronds };
+  }, [seed]);
+  const geo = frondGeometry();
   return (
     <group>
       <BlobShadow r={2 * k} len={h * 0.4} opacity={0.22} />
-      {Array.from({ length: segs }, (_, i) => (
-        <mesh key={i} position={[lean * i * (h / segs), (i + 0.5) * (h / segs), 0]} rotation-z={-lean}>
-          <cylinderGeometry args={[0.18 - i * 0.015, 0.22 - i * 0.015, h / segs + 0.05, 7]} />
-          <meshStandardMaterial color={i % 2 ? '#7A6247' : '#6B543C'} roughness={1} />
-        </mesh>
-      ))}
-      <group position={[lean * h, h, 0]} scale={k}>
-        {Array.from({ length: 9 }, (_, i) => (
-          <mesh key={i} rotation={[0, (i / 9) * Math.PI * 2, 0.9]} position={[0, 0, 0]}>
-            <coneGeometry args={[0.35, 3.4, 4, 1]} />
-            <meshStandardMaterial color={i % 2 ? '#4F6B2E' : '#5C7A34'} roughness={0.9} side={THREE.DoubleSide} />
+      {/* A gently curving trunk, ringed */}
+      {Array.from({ length: segs }, (_, i) => {
+        const t = (i + 0.5) / segs;
+        return (
+          <mesh key={i} position={[lean * h * t * t, t * h, 0]} rotation-z={-lean * 2 * t}>
+            <cylinderGeometry args={[0.17 - t * 0.05, 0.2 - t * 0.05, h / segs + 0.06, 9]} />
+            <meshStandardMaterial color={i % 2 ? '#8A7052' : '#7A6146'} roughness={1} />
           </mesh>
+        );
+      })}
+      <group position={[lean * h, h, 0]} scale={k}>
+        <mesh position={[0, -0.1, 0]}>
+          <sphereGeometry args={[0.32, 10, 8]} />
+          <meshStandardMaterial color="#6B5A3A" roughness={1} />
+        </mesh>
+        {fronds.map((f, i) => (
+          <group key={i} rotation-y={f.a}>
+            <mesh geometry={geo} rotation-z={f.tilt} scale={f.s}>
+              <meshStandardMaterial color={f.c} roughness={0.85} side={THREE.DoubleSide} vertexColors />
+            </mesh>
+          </group>
         ))}
       </group>
     </group>
@@ -389,30 +457,118 @@ function Palm({ w, h, seed }: { w: number; h: number; seed: string }) {
 }
 
 // ---------------------------------------------------------------- buildings and shelters
+  // Plastered wall with rows of windows, one texture per side length
+function useFacade(len: number, h: number, key: string) {
+  return useCanvasTexture(512, 256, (ctx) => {
+      const rnd = seeded('bld' + key + Math.round(len) + Math.round(h));
+      ctx.fillStyle = '#E6E2DA';
+      ctx.fillRect(0, 0, 512, 256);
+      // Soft weathering streaks under the parapet and dust at the foot
+      const top = ctx.createLinearGradient(0, 0, 0, 256);
+      top.addColorStop(0, 'rgba(120,110,95,0.18)');
+      top.addColorStop(0.12, 'rgba(120,110,95,0)');
+      top.addColorStop(0.86, 'rgba(160,140,110,0)');
+      top.addColorStop(1, 'rgba(160,140,110,0.4)');
+      ctx.fillStyle = top;
+      ctx.fillRect(0, 0, 512, 256);
+      for (let i = 0; i < 26; i++) {
+        ctx.fillStyle = `rgba(110,100,88,${0.03 + rnd() * 0.05})`;
+        ctx.fillRect(rnd() * 512, 0, 2 + rnd() * 5, 30 + rnd() * 120);
+      }
+      const floors = Math.max(1, Math.round(h / 3.2));
+      const cols = Math.max(2, Math.round(len / 3.4));
+      const cw = 512 / cols;
+      const fh = 256 / floors;
+      for (let f = 0; f < floors; f++) {
+        for (let c = 0; c < cols; c++) {
+          const x = c * cw + cw * 0.22;
+          const y = f * fh + fh * 0.24;
+          const ww = cw * 0.56;
+          const wh = fh * 0.42;
+          ctx.fillStyle = '#CFC9BE'; // frame
+          ctx.fillRect(x - 3, y - 3, ww + 6, wh + 6);
+          const g = ctx.createLinearGradient(0, y, 0, y + wh);
+          g.addColorStop(0, '#6F8698');
+          g.addColorStop(1, '#2F3D49');
+          ctx.fillStyle = g;
+          ctx.fillRect(x, y, ww, wh);
+          ctx.fillStyle = 'rgba(255,255,255,0.14)'; // sky glint
+          ctx.fillRect(x, y, ww * 0.45, wh * 0.5);
+          ctx.fillStyle = '#B9B3A8'; // sill and its shadow
+          ctx.fillRect(x - 5, y + wh + 3, ww + 10, 4);
+          ctx.fillStyle = 'rgba(60,52,44,0.22)';
+          ctx.fillRect(x - 5, y + wh + 7, ww + 10, 5);
+        }
+      }
+    }, [key, Math.round(len), Math.round(h)]);
+}
 function Building({ w, d, h, selected }: { w: number; d: number; h: number; selected: boolean }) {
-  const wall = selected ? '#fef9c3' : '#E8E6E1';
+  const wall = selected ? '#fef9c3' : '#ffffff';
+  const long = useFacade(d, h, 'l');
+  const short = useFacade(w, h, 's');
+  const units = useMemo(() => {
+    const rnd = seeded('ac' + Math.round(w * 7 + d * 13));
+    return Array.from({ length: Math.max(1, Math.min(4, Math.round((w * d) / 60))) }, () => ({
+      x: (rnd() - 0.5) * w * 0.6,
+      z: (rnd() - 0.5) * d * 0.6,
+      r: rnd() > 0.5 ? 0 : Math.PI / 2,
+    }));
+  }, [w, d]);
   return (
     <group>
       <BlobShadow r={Math.max(w, d) / 2} len={h} opacity={0.22} />
+      {/* box faces: +x, -x, +y, -y, +z, -z */}
       <mesh position={[0, h / 2, 0]}>
         <boxGeometry args={[w, h, d]} />
-        <meshStandardMaterial color={wall} roughness={0.85} />
+        <meshStandardMaterial attach="material-0" map={long} color={wall} roughness={0.9} />
+        <meshStandardMaterial attach="material-1" map={long} color={wall} roughness={0.9} />
+        <meshStandardMaterial attach="material-2" color="#BEB9AE" roughness={1} />
+        <meshStandardMaterial attach="material-3" color="#BEB9AE" roughness={1} />
+        <meshStandardMaterial attach="material-4" map={short} color={wall} roughness={0.9} />
+        <meshStandardMaterial attach="material-5" map={short} color={wall} roughness={0.9} />
       </mesh>
-      {/* Parapet and a band of dark windows on the long sides */}
-      <mesh position={[0, h + 0.2, 0]}>
-        <boxGeometry args={[w + 0.2, 0.4, d + 0.2]} />
-        <meshStandardMaterial color="#D6D3CC" roughness={0.9} />
+      {/* Plinth */}
+      <mesh position={[0, 0.2, 0]}>
+        <boxGeometry args={[w + 0.16, 0.4, d + 0.16]} />
+        <meshStandardMaterial color="#A9A398" roughness={1} />
       </mesh>
-      {[-1, 1].map((s) => (
-        <mesh key={s} position={[(s * (w / 2 + 0.01)), h * 0.55, 0]} rotation-y={(s * Math.PI) / 2}>
-          <planeGeometry args={[d * 0.8, h * 0.28]} />
-          <meshStandardMaterial color="#5B6B78" roughness={0.3} metalness={0.2} />
+      {/* Parapet: four low walls round the roof, so the roof sits recessed */}
+      {[
+        [0, d / 2, w + 0.3, 0.25],
+        [0, -d / 2, w + 0.3, 0.25],
+        [w / 2, 0, 0.25, d + 0.3],
+        [-w / 2, 0, 0.25, d + 0.3],
+      ].map(([x, z, sx, sz], i) => (
+        <mesh key={i} position={[x, h + 0.3, z]}>
+          <boxGeometry args={[sx, 0.6, sz]} />
+          <meshStandardMaterial color="#D6D3CC" roughness={0.9} />
         </mesh>
       ))}
+      {/* Roof plant */}
+      {units.map((u, i) => (
+        <group key={i} position={[u.x, h, u.z]} rotation-y={u.r}>
+          <mesh position={[0, 0.45, 0]}>
+            <boxGeometry args={[1.6, 0.9, 1]} />
+            <meshStandardMaterial color="#C9CCCD" roughness={0.6} metalness={0.3} />
+          </mesh>
+          <mesh position={[0, 0.91, 0]} rotation-x={-Math.PI / 2}>
+            <circleGeometry args={[0.36, 16]} />
+            <meshStandardMaterial color="#3E4448" roughness={0.7} />
+          </mesh>
+        </group>
+      ))}
+      {/* Door with a small canopy on one long side */}
+      <mesh position={[w / 2 + 0.03, 1.1, d * 0.18]} rotation-y={Math.PI / 2}>
+        <planeGeometry args={[1.3, 2.2]} />
+        <meshStandardMaterial color="#4A4F55" roughness={0.6} metalness={0.2} />
+      </mesh>
+      <mesh position={[w / 2 + 0.5, 2.45, d * 0.18]}>
+        <boxGeometry args={[1, 0.1, 2]} />
+        <meshStandardMaterial color="#8E9296" roughness={0.7} />
+      </mesh>
     </group>
   );
 }
-
 function Cabin({ w, d, h, selected }: { w: number; d: number; h: number; selected: boolean }) {
   return (
     <group>
@@ -830,69 +986,38 @@ export function SiteModel({
 }
 
 // ---------------------------------------------------------------- Desert look: ground and world
-/** Field surface for the Desert look: warm sand with grain and faint tyre tracks, plus the ground mark. */
-export function DesertField({ groundName }: { groundName: GroundMarkSource; fc: FieldColors }) {
-  const pxPerM = 8;
-  const W = Math.round(FIELD_WIDTH_M * pxPerM);
-  const H = Math.round(FIELD_HEIGHT_M * pxPerM);
-  const tex = useCanvasTexture(
-    Math.min(4096, W),
-    Math.min(4096, H),
-    (ctx) => {
-      const { width, height } = ctx.canvas;
-      const rnd = seeded('desert');
-      grain(ctx, DESERT.field.ground ?? "#B5A790", '#A99B84', '#C7BAA3', Math.round(width * height * 0.04), rnd);
-      // Big soft patches: darker crust and paler drift sand
-      for (let i = 0; i < 70; i++) {
-        const x = rnd() * width;
-        const y = rnd() * height;
-        const r = 20 + rnd() * 90;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        const c = rnd() < 0.5 ? '150,136,114' : '214,203,184';
-        g.addColorStop(0, `rgba(${c},0.35)`);
-        g.addColorStop(1, `rgba(${c},0)`);
-        ctx.fillStyle = g;
-        ctx.fillRect(x - r, y - r, r * 2, r * 2);
-      }
-      if (hasGroundMark(groundName)) drawWatermarkText(ctx, groundName, width, height, 'rgba(90, 76, 56, 0.16)');
-    },
-    [groundName, W, H]
-  );
-  return (
-    <group>
-      <mesh rotation-x={-Math.PI / 2} receiveShadow>
-        <planeGeometry args={[FIELD_WIDTH_M, FIELD_HEIGHT_M]} />
-        <meshStandardMaterial map={tex} roughness={1} />
-      </mesh>
-    </group>
-  );
+/** The Desert look's ground is one continuous desert (see DesertWorld), so the field itself adds nothing. */
+export function DesertField(_props: { groundName: GroundMarkSource; fc: FieldColors }) {
+  return null;
 }
 
-/** The desert around the field: sand to the horizon, scattered scrub, a far tree line and hazy sky. */
+/** The desert, under and around the field: sand to the horizon, scattered scrub and a far tree line. */
 export function DesertWorld({ scale = 1 }: { scale?: number }) {
   const far = Math.max(FIELD_WIDTH_M, FIELD_HEIGHT_M);
-  // Fine, low-contrast grain so the far desert reads as smooth sand, not blotches
-  const sand = useCanvasTexture(512, 512, (ctx) => grain(ctx, '#ADA08A', '#A69983', '#B5A892', 9000, seeded('outer')), [], [260, 260]);
+  const R = far * 4 * scale;
+  // Colour varies over 60 m patches and the bumps repeat every 7 m: two scales, so no visible tiling
+  const sand = useCanvasTexture(1024, 1024, (ctx) => paintGround(ctx, '#AC976F', '#B9A47E', '#C6B38D', 11, 0.03), [], [(R * 2) / 95, (R * 2) / 95]);
+  const bump = useBump((R * 2) / 7, (R * 2) / 7);
   const scrub = useMemo(() => {
     const rnd = seeded('outer-scrub');
-    const n = 900;
-    const geo = new THREE.SphereGeometry(1, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2);
-    const mat = new THREE.MeshStandardMaterial({ roughness: 1 });
-    const m = new THREE.InstancedMesh(geo, mat, n);
+    const n = 1100;
+    const mat = new THREE.MeshStandardMaterial({ roughness: 0.95, vertexColors: true });
+    const m = new THREE.InstancedMesh(bushGeometry(), mat, n);
     const o = new THREE.Object3D();
     const col = new THREE.Color();
     let k = 0;
     while (k < n) {
-      const x = (rnd() - 0.5) * far * 3.2;
-      const z = (rnd() - 0.5) * far * 3.2;
+      const x = (rnd() - 0.5) * far * 3.4;
+      const z = (rnd() - 0.5) * far * 3.4;
       // Keep the field itself clear (its own scrub is placed as items)
       if (Math.abs(x) < FIELD_WIDTH_M / 2 + 4 && Math.abs(z) < FIELD_HEIGHT_M / 2 + 4) continue;
-      const s = 0.5 + rnd() * 1.1;
+      const s = 0.5 + rnd() * 1.2;
       o.position.set(x, 0, z);
-      o.scale.set(s, s * 0.7, s);
+      o.rotation.y = rnd() * Math.PI * 2;
+      o.scale.set(s, s * (0.55 + rnd() * 0.35), s);
       o.updateMatrix();
       m.setMatrixAt(k, o.matrix);
-      m.setColorAt(k, col.set(BUSH_COLORS[Math.floor(rnd() * BUSH_COLORS.length)]));
+      m.setColorAt(k, col.set(BUSH_COLORS[Math.floor(rnd() * BUSH_COLORS.length)]).multiplyScalar(1.5));
       k++;
     }
     m.instanceMatrix.needsUpdate = true;
@@ -903,37 +1028,34 @@ export function DesertWorld({ scale = 1 }: { scale?: number }) {
   // Far tree line and low white buildings on the horizon
   const horizon = useMemo(() => {
     const rnd = seeded('horizon');
-    const R = far * 2.4;
-    const trees: { x: number; z: number; s: number }[] = [];
-    for (let i = 0; i < 160; i++) {
+    const Rh = far * 2.4;
+    const trees: { x: number; z: number; s: number; g: number }[] = [];
+    for (let i = 0; i < 180; i++) {
       const a = rnd() * Math.PI * 2;
-      const r = R * (0.95 + rnd() * 0.15);
-      trees.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, s: 4 + rnd() * 6 });
+      const r = Rh * (0.95 + rnd() * 0.2);
+      trees.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, s: 4 + rnd() * 7, g: i % 3 });
     }
     const blds: { x: number; z: number; w: number; h: number; d: number; a: number }[] = [];
     for (let i = 0; i < 14; i++) {
       const a = rnd() * Math.PI * 2;
-      const r = R * (0.85 + rnd() * 0.1);
+      const r = Rh * (0.85 + rnd() * 0.1);
       blds.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, w: 12 + rnd() * 30, h: 4 + rnd() * 6, d: 10 + rnd() * 20, a });
     }
     return { trees, blds };
   }, [far]);
-  useEffect(() => () => {
-    scrub.geometry.dispose();
-    (scrub.material as THREE.Material).dispose();
-  }, [scrub]);
+  useEffect(() => () => (scrub.material as THREE.Material).dispose(), [scrub]);
+  const geos = foliageGeos();
   return (
     <group userData={{ noExport: true }}>
       <color attach="background" args={[DESERT.scene.sky]} />
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.02} raycast={noRaycast}>
-        <circleGeometry args={[far * 4 * scale, 48]} />
-        <meshStandardMaterial map={sand} roughness={1} />
+      <mesh rotation-x={-Math.PI / 2} raycast={noRaycast}>
+        <circleGeometry args={[R, 64]} />
+        <meshStandardMaterial map={sand} roughness={1} normalMap={bump} normalScale={BUMP} onBeforeCompile={detileGround} />
       </mesh>
       <primitive object={scrub} />
       {horizon.trees.map((t, i) => (
-        <mesh key={i} position={[t.x, t.s * 0.6, t.z]} scale={[t.s, t.s * 0.75, t.s]} raycast={noRaycast}>
-          <icosahedronGeometry args={[1, 0]} />
-          <meshStandardMaterial color="#3E4A2C" roughness={1} flatShading />
+        <mesh key={i} geometry={geos[t.g]} position={[t.x, t.s * 0.7, t.z]} scale={[t.s, t.s * 0.75, t.s]} raycast={noRaycast}>
+          <meshStandardMaterial color="#56703A" roughness={1} vertexColors />
         </mesh>
       ))}
       {horizon.blds.map((b, i) => (
@@ -947,9 +1069,9 @@ export function DesertWorld({ scale = 1 }: { scale?: number }) {
 }
 
 // ---------------------------------------------------------------- LED lights on environment assets
-const ledMat = (color: string) => <meshStandardMaterial color="#000000" emissive={color} emissiveIntensity={1.15} toneMapped={false} />;
+const ledMat = (color: string) => <meshStandardMaterial color="#000000" emissive={color} emissiveIntensity={1.15 * glowBoost()} toneMapped={false} />;
 const haloMat = (color: string) => (
-  <meshBasicMaterial color={color} transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
+  <meshBasicMaterial color={color} transparent opacity={graphicsQuality() === 'low' ? 0.3 : 0} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
 );
 
 /** A neon strip round a w x d rectangle at height y (with a soft halo). */
